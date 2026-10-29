@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OptionLab — Labo de produits dérivés</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="brand">Option<span>Lab</span></div>
+    <nav>
+      <button class="tab active" data-tab="strategy">Stratégies</button>
+      <button class="tab" data-tab="pricer">Pricer</button>
+      <button class="tab" data-tab="iv">Vol implicite</button>
+      <button class="tab" data-tab="hedge">Couverture</button>
+      <button class="tab" data-tab="learn">Apprendre</button>
+    </nav>
+  </header>
+  <p class="disclaimer">Outil éducatif : modèle de Black-Scholes, simulations théoriques. Rien ici ne constitue un conseil en investissement.</p>
+
+  <main id="main">
+    <!-- Paramètres de marché communs -->
+    <section class="card market">
+      <h2>Marché</h2>
+      <div class="ticker-box">
+        <label>Titre réel (Yahoo Finance)
+          <div class="row tight">
+            <input type="text" id="ticker" placeholder="AAPL, TTE.PA, ^GSPC…" autocomplete="off">
+            <button id="load-ticker">Charger</button>
+          </div>
+        </label>
+        <div id="ticker-info" class="small muted"></div>
+      </div>
+      <div class="sliders">
+        <label>Spot S <output id="o-S"></output><input type="range" id="S" min="20" max="300" step="0.5" value="100"></label>
+        <label>Volatilité σ <output id="o-sigma"></output><input type="range" id="sigma" min="0.01" max="1.2" step="0.0005" value="0.25"></label>
+        <label>Maturité T (années) <output id="o-T"></output><input type="range" id="T" min="0.02" max="3" step="0.01" value="0.5"></label>
+        <label>Taux r <output id="o-r"></output><input type="range" id="r" min="-0.01" max="0.12" step="0.0025" value="0.03"></label>
+        <label>Dividende q <output id="o-q"></output><input type="range" id="q" min="0" max="0.08" step="0.0001" value="0"></label>
+      </div>
+      <div id="ticker-chart" class="mini-chart hidden"></div>
+    </section>
+
+    <!-- Onglet stratégies -->
+    <section id="tab-strategy" class="panel">
+      <div class="card">
+        <div class="row">
+          <label class="grow">Stratégie
+            <select id="preset"></select>
+          </label>
+          <button id="rebuild" class="secondary">Recentrer sur le spot</button>
+        </div>
+        <p id="preset-desc" class="muted"></p>
+        <div class="table-wrap">
+          <table class="legs">
+            <thead><tr><th>Sens</th><th>Type</th><th>Strike</th><th>Qté</th><th>Prime</th><th></th></tr></thead>
+            <tbody id="legs"></tbody>
+          </table>
+        </div>
+        <button id="add-leg" class="secondary">+ Ajouter une jambe</button>
+      </div>
+
+      <div class="stats" id="strategy-stats"></div>
+      <div class="card"><div id="chart-strategy" class="chart"></div></div>
+    </section>
+
+    <!-- Onglet pricer -->
+    <section id="tab-pricer" class="panel hidden">
+      <div class="card row">
+        <label>Strike K <input type="number" id="K" value="100" step="1" min="0.01"></label>
+        <label>Type
+          <select id="option"><option value="call">Call</option><option value="put">Put</option></select>
+        </label>
+        <label>Courbe
+          <select id="curve">
+            <option value="price">Prix</option><option value="delta">Delta</option>
+            <option value="gamma">Gamma</option><option value="vega">Vega</option>
+            <option value="theta">Theta</option><option value="rho">Rho</option>
+          </select>
+        </label>
+      </div>
+      <div class="stats" id="pricer-stats"></div>
+      <div class="card"><div id="chart-pricer" class="chart"></div></div>
+    </section>
+
+    <!-- Onglet vol implicite -->
+    <section id="tab-iv" class="panel hidden">
+      <div class="card row">
+        <label>Prix observé de l'option <input type="number" id="iv-price" value="8" step="0.1" min="0.01"></label>
+        <label>Strike K <input type="number" id="iv-K" value="100" step="1"></label>
+        <label>Type
+          <select id="iv-option"><option value="call">Call</option><option value="put">Put</option></select>
+        </label>
+        <button id="iv-run">Calculer</button>
+      </div>
+      <div class="stats" id="iv-stats"></div>
+      <div class="card muted small">
+        La volatilité implicite est la valeur de σ qui, mise dans Black-Scholes, redonne le prix observé.
+        Elle se calcule par Newton-Raphson (on utilise le vega comme dérivée), avec un repli sur la dichotomie.
+        Les paramètres S, T, r et q sont ceux du panneau Marché.
+      </div>
+    </section>
+
+    <!-- Onglet couverture -->
+    <section id="tab-hedge" class="panel hidden">
+      <div class="card">
+        <p class="small muted intro">
+          Une banque <b>vend</b> une option au prix Black-Scholes (avec la vol du panneau Marché, la <b>vol implicite</b>),
+          puis se couvre en détenant <b>delta</b> actions, réajusté régulièrement. Le cours évolue avec la <b>vol réalisée</b>.
+          Combien gagne ou perd la banque ?
+        </p>
+        <div class="row">
+          <label>Strike K <input type="number" id="h-K" value="100" step="1" min="0.01"></label>
+          <label>Option
+            <select id="h-option"><option value="call">Call</option><option value="put">Put</option></select>
+          </label>
+          <label>Position
+            <select id="h-side"><option value="short">Vendeur (banque)</option><option value="long">Acheteur</option></select>
+          </label>
+          <label>Rebalancement
+            <select id="h-freq">
+              <option value="12">Mensuel</option><option value="52" selected>Hebdomadaire</option>
+              <option value="252">Quotidien</option>
+            </select>
+          </label>
+        </div>
+        <div class="row sliders-inline">
+          <label>Vol réalisée <output id="o-hvol"></output><input type="range" id="h-vol" min="0.05" max="0.8" step="0.01" value="0.25"></label>
+          <label>Tendance μ <output id="o-hmu"></output><input type="range" id="h-mu" min="-0.3" max="0.3" step="0.01" value="0.05"></label>
+          <label>Frais par transaction <output id="o-hcost"></output><input type="range" id="h-cost" min="0" max="0.005" step="0.0005" value="0"></label>
+          <label>Trajectoires
+            <select id="h-paths"><option>1000</option><option selected>2000</option><option>5000</option></select>
+          </label>
+        </div>
+        <div class="row"><button id="h-run">Lancer la simulation</button><button id="h-reseed" class="secondary">Nouvelle trajectoire</button></div>
+      </div>
+      <div class="stats" id="hedge-stats"></div>
+      <div class="card"><div id="chart-hedge-path" class="chart"></div></div>
+      <div class="grid2">
+        <div class="card"><div id="chart-hedge-hist" class="chart small-chart"></div></div>
+        <div class="card"><div id="chart-hedge-conv" class="chart small-chart"></div></div>
+      </div>
+      <div class="card small muted" id="hedge-explain"></div>
+    </section>
+
+    <!-- Onglet apprendre -->
+    <section id="tab-learn" class="panel hidden">
+      <div class="learn">
+        <aside class="card lesson-list">
+          <h2>Cours</h2>
+          <div id="progress" class="small muted"></div>
+          <div class="progress-bar"><div id="progress-fill"></div></div>
+          <ol id="lessons"></ol>
+        </aside>
+        <article class="card lesson" id="lesson"></article>
+      </div>
+    </section>
+  </main>
+
+  <footer class="muted small">OptionLab · FastAPI + numpy/scipy · <a href="/docs" target="_blank">Documentation de l'API</a></footer>
+  <script src="/static/lessons.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
