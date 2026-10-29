@@ -2,6 +2,8 @@
 
 Plateforme web éducative pour comprendre les options : pricing Black-Scholes, greeks, volatilité implicite et construction de stratégies (straddle, spreads, butterfly, iron condor…) avec graphiques de P&L interactifs.
 
+**Site en ligne : https://optionlab-mlpk.onrender.com**
+
 > Projet éducatif : modèles théoriques et simulations, aucun conseil en investissement.
 
 ## Fonctionnalités
