@@ -199,7 +199,7 @@ async function loadTicker() {
     S.max = +(d.price * 2).toFixed(2);
     S.step = 0.01;
     S.value = d.price;
-    $("sigma").value = Math.min(1.2, Math.max(0.01, d.vol_1y)).toFixed(2);
+    $("sigma").value = Math.min(1.2, Math.max(0.01, d.vol_1y)).toFixed(4);
     $("q").value = Math.min(0.08, d.dividend_yield).toFixed(4);
     // strikes des autres onglets alignés sur le cours
     const k = d.price > 50 ? Math.round(d.price) : +d.price.toFixed(2);
@@ -211,7 +211,8 @@ async function loadTicker() {
     $("ticker-chart").classList.remove("hidden");
     Plotly.react("ticker-chart", [{ x: d.history.dates, y: d.history.close, line: { color: "#4f8cff", width: 1.5 } }], {
       ...layoutBase, showlegend: false, margin: { l: 35, r: 5, t: 5, b: 25 },
-      xaxis: { ...layoutBase.xaxis, showgrid: false }, yaxis: { ...layoutBase.yaxis },
+      xaxis: { ...layoutBase.xaxis, showgrid: false, tickformat: "%b %y", nticks: 4, tickangle: 0 },
+      yaxis: { ...layoutBase.yaxis, nticks: 4 },
     }, { ...plotConfig, displayModeBar: false });
     updateOutputs();
     if (activeTab === "strategy") await loadPreset(); else refreshActive();

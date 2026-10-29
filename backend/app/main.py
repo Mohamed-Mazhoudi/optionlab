@@ -161,6 +161,6 @@ FRONTEND = Path(__file__).resolve().parents[2] / "frontend"
 if FRONTEND.exists():
     app.mount("/static", StaticFiles(directory=FRONTEND), name="static")
 
-    @app.get("/", include_in_schema=False)
+    @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     def index():
         return FileResponse(FRONTEND / "index.html")
