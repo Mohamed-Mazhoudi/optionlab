@@ -185,4 +185,8 @@ def build_preset(key: str, market: Market, width: float | None = None) -> Strate
         "iron_condor": [Leg("put", "long", k - 2 * w), Leg("put", "short", k - w),
                         Leg("call", "short", k + w), Leg("call", "long", k + 2 * w)],
     }
-    return Strategy(legs[key], market, PRESETS[key]["label"])
+    chosen = legs[key]
+    for leg in chosen:            # évite les strikes du type 314.71000000000004
+        if leg.strike is not None:
+            leg.strike = round(leg.strike, 2)
+    return Strategy(chosen, market, PRESETS[key]["label"])

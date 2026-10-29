@@ -71,3 +71,8 @@ def test_validation():
         Strategy([Leg("call", "long", None)], M)
     with pytest.raises(ValueError):
         build_preset("inconnue", M)
+
+
+def test_strikes_des_presets_arrondis():
+    st = build_preset("iron_condor", Market(S=349.67, T=0.5))
+    assert all(l.strike == round(l.strike, 2) and len(repr(l.strike)) < 10 for l in st.legs)
