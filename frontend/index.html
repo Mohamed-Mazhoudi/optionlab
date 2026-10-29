@@ -16,6 +16,7 @@
       <button class="tab" data-tab="iv">Vol implicite</button>
       <button class="tab" data-tab="hedge">Couverture</button>
       <button class="tab" data-tab="learn">Apprendre</button>
+      <button class="tab" data-tab="portfolio">Portefeuille</button>
     </nav>
   </header>
   <p class="disclaimer">Outil éducatif : modèle de Black-Scholes, simulations théoriques. Rien ici ne constitue un conseil en investissement.</p>
@@ -157,10 +158,75 @@
         <article class="card lesson" id="lesson"></article>
       </div>
     </section>
+    <!-- Onglet portefeuille virtuel -->
+    <section id="tab-portfolio" class="panel hidden">
+      <!-- Non connecté -->
+      <div id="pf-auth" class="hidden">
+        <div class="card intro-card">
+          <h1 class="pf-title">Ton portefeuille d'options virtuel</h1>
+          <p class="muted">100 000 crédits virtuels pour acheter et vendre des calls et des puts sur de vrais titres
+            (Apple, TotalEnergies, CAC 40…), suivre ton P&amp;L et te mesurer aux autres joueurs. Simulation éducative :
+            aucun argent réel.</p>
+        </div>
+        <div class="grid2">
+          <form class="card auth-form" id="login-form">
+            <h2>Connexion</h2>
+            <label>Email <input type="email" name="email" required autocomplete="email"></label>
+            <label>Mot de passe <input type="password" name="password" required autocomplete="current-password"></label>
+            <button type="submit">Se connecter</button>
+            <div class="form-msg error"></div>
+          </form>
+          <form class="card auth-form" id="register-form">
+            <h2>Créer un compte</h2>
+            <label>Email <input type="email" name="email" required autocomplete="email"></label>
+            <label>Pseudo (visible dans le classement) <input type="text" name="username" required minlength="3" maxlength="20" pattern="[A-Za-z0-9_\-]{3,20}" autocomplete="username"></label>
+            <label>Mot de passe (8 caractères min.) <input type="password" name="password" required minlength="8" autocomplete="new-password"></label>
+            <button type="submit">Créer mon compte</button>
+            <div class="form-msg error"></div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Connecté -->
+      <div id="pf-app" class="hidden">
+        <div class="pf-head">
+          <div><span class="muted small">Connecté en tant que</span> <b id="pf-user"></b></div>
+          <div class="row tight"><button class="secondary" id="pf-refresh">Actualiser</button><button class="secondary" id="pf-logout">Déconnexion</button></div>
+        </div>
+        <div class="stats" id="pf-stats"></div>
+        <div id="pf-notice" class="small muted"></div>
+
+        <div class="card">
+          <h2>Passer un ordre</h2>
+          <div class="row">
+            <label>Titre <input type="text" id="o-ticker" placeholder="AAPL, TTE.PA, ^FCHI…" autocomplete="off"></label>
+            <label>Option <select id="o-kind"><option value="call">Call</option><option value="put">Put</option></select></label>
+            <label>Sens <select id="o-side"><option value="long">Acheter</option><option value="short">Vendre</option></select></label>
+            <label>Strike <input type="number" id="o-strike" step="any" min="0.01" placeholder="auto = cours"></label>
+            <label>Échéance <select id="o-maturity"><option value="1M">1 mois</option><option value="3M" selected>3 mois</option><option value="6M">6 mois</option><option value="1A">1 an</option></select></label>
+            <label>Contrats <input type="number" id="o-qty" value="1" min="1" max="50" step="1"></label>
+          </div>
+          <div class="row"><button class="secondary" id="o-quote">Coter</button><button id="o-send" disabled>Passer l'ordre</button></div>
+          <div id="o-result" class="quote-box small"></div>
+          <p class="small muted">1 contrat = 100 options. Achat au prix vendeur (ask), vente au prix acheteur (bid), écart de 1 %.
+            Vendre une option immobilise une marge de 20 % du cours + la prime.</p>
+        </div>
+
+        <div class="card">
+          <h2>Positions ouvertes</h2>
+          <div class="table-wrap"><table class="data" id="pf-positions"></table></div>
+        </div>
+        <div class="grid2">
+          <div class="card"><h2>Historique</h2><div class="table-wrap"><table class="data" id="pf-history"></table></div></div>
+          <div class="card"><h2>Classement</h2><div class="table-wrap"><table class="data" id="pf-board"></table></div></div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer class="muted small">OptionLab · FastAPI + numpy/scipy · <a href="/docs" target="_blank">Documentation de l'API</a></footer>
   <script src="/static/lessons.js"></script>
   <script src="/static/app.js"></script>
+  <script src="/static/portfolio.js"></script>
 </body>
 </html>

@@ -6,7 +6,6 @@ from typing import Literal
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -16,9 +15,15 @@ from optionlab import (Leg, Market, Strategy, PRESETS, build_preset, bs_price, b
 from optionlab.hedging import run_hedging
 from optionlab.marketdata import fetch_market
 
+from .db import Database
+from .routes_portfolio import router as portfolio_router
+
 app = FastAPI(title="OptionLab API", version="1.0.0",
               description="Pricing Black-Scholes, greeks et stratégies d'options (simulation éducative).")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# Base de données (SQLite en local, PostgreSQL si DATABASE_URL est défini) + routes du portefeuille
+app.state.db = Database()
+app.state.db.init_schema()
+app.include_router(portfolio_router)
 
 
 # ---------- schémas ----------

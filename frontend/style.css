@@ -27,6 +27,7 @@ input[type=number], select { background: var(--bg); color: var(--text); border: 
 .row > label { flex: 1; min-width: 120px; }
 .grow { flex: 3 !important; }
 button { background: var(--accent); color: white; border: 0; border-radius: 8px; padding: 9px 14px; cursor: pointer; font-size: 14px; }
+button:disabled { opacity: .45; cursor: not-allowed; }
 button.secondary { background: transparent; border: 1px solid var(--border); color: var(--text); }
 button.icon { background: transparent; color: var(--muted); padding: 4px 8px; }
 button.icon:hover { color: var(--red); }
@@ -56,6 +57,7 @@ input[type=text] { background: var(--bg); color: var(--text); border: 1px solid 
 .table-wrap { overflow-x: auto; }
 .legs select, .legs input { min-width: 70px; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid2 > * { min-width: 0; }
 .small-chart { height: 320px; }
 .sliders-inline { margin-top: 14px; }
 .sliders-inline label { position: relative; }
@@ -94,10 +96,29 @@ main.learn-mode .market { display: none; }
 .choices button:hover:not(:disabled) { border-color: var(--accent); }
 .choices button.right { border-color: var(--green); background: rgba(47,191,113,.12); }
 .choices button.wrong { border-color: var(--red); background: rgba(239,91,91,.12); }
-.choices button:disabled { cursor: default; }
+.choices button:disabled { cursor: default; opacity: 1; }
 .explain { font-size: 14px; color: var(--muted); margin-top: 6px; }
 .lesson-nav { display: flex; justify-content: space-between; margin-top: 24px; gap: 10px; }
 .score { font-weight: 700; margin-top: 12px; }
+
+/* portefeuille */
+.pf-title { font-size: 22px; margin: 0 0 6px; }
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.auth-form h2 { margin-bottom: 0; }
+input[type=email], input[type=password] { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 7px 9px; font-size: 14px; width: 100%; }
+.form-msg:empty, #pf-notice:empty, .quote-box:empty { display: none; }
+.pf-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.quote-box { margin-top: 12px; padding: 10px 14px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); line-height: 1.7; }
+table.data { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.data th { text-align: left; color: var(--muted); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.data td { padding: 7px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.small-btn { padding: 4px 10px; font-size: 13px; }
+.data tr.me td { background: rgba(79,140,255,.10); }
+.data .empty { color: var(--muted); text-align: center; padding: 18px; white-space: normal; }
+.panel > .card h2, .grid2 .card h2 { margin-bottom: 12px; }
+#tab-portfolio { gap: 16px; }
+#pf-auth, #pf-app { display: flex; flex-direction: column; gap: 16px; }
+#pf-auth.hidden, #pf-app.hidden { display: none; }
 
 @media (max-width: 860px) {
   main { grid-template-columns: 1fr; }

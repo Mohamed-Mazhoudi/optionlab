@@ -12,6 +12,7 @@ Plateforme web éducative pour comprendre les options : pricing Black-Scholes, g
 - **Données réelles** : saisie d'un ticker Yahoo Finance (AAPL, TTE.PA, ^GSPC…) qui remplit le spot, la volatilité historique et le dividende.
 - **Couverture (delta hedging)** : simulation Monte-Carlo d'une banque qui vend une option et se couvre ; effet de la fréquence de rebalancement, de l'écart vol réalisée / vol implicite, de la tendance et des frais.
 - **Apprendre** : 15 leçons en 5 modules (bases, pricing, greeks, stratégies, couverture), 45 questions de quiz corrigées, boutons « essayer dans le labo », progression sauvegardée dans le navigateur.
+- **Portefeuille virtuel** : comptes utilisateurs, 100 000 crédits virtuels, achat/vente de calls et puts sur de vrais titres (bid/ask, marge pour la vente, règlement à l'échéance), positions valorisées en direct avec greeks, historique et classement des joueurs.
 - **API REST** documentée automatiquement (Swagger sur `/docs`).
 
 ## Structure
@@ -24,7 +25,12 @@ optionlab/
 │   │   ├── strategies.py   # jambes, stratégies, P&L, points morts, presets
 │   │   ├── hedging.py      # simulation de delta hedging
 │   │   └── marketdata.py   # données Yahoo Finance, volatilité historique
-│   ├── app/main.py         # API FastAPI + service du frontend
+│   ├── app/
+│   │   ├── main.py         # API FastAPI + service du frontend
+│   │   ├── db.py           # accès base (SQLite en local, PostgreSQL si DATABASE_URL)
+│   │   ├── auth.py         # comptes, mots de passe hachés (PBKDF2), sessions
+│   │   ├── portfolio.py    # règles du portefeuille virtuel
+│   │   └── routes_portfolio.py
 │   ├── tests/              # pytest (parité call-put, greeks vs différences finies, etc.)
 │   └── requirements.txt
 ├── frontend/               # HTML/CSS/JS sans framework + Plotly (lessons.js = contenu des cours)
@@ -69,6 +75,17 @@ pytest -q
 | POST | `/api/strategy` | Analyse complète d'une stratégie |
 | POST | `/api/hedging` | Simulation de delta hedging |
 | GET | `/api/market/{ticker}` | Cours, vol historique et dividende d'un titre réel |
+| POST | `/api/auth/register`, `/api/auth/login`, `/api/auth/logout` | Comptes (cookie de session HttpOnly) |
+| GET | `/api/portfolio`, `/api/portfolio/history` | Portefeuille valorisé, historique |
+| POST | `/api/portfolio/quote`, `/api/portfolio/orders` | Cotation, passage d'ordre |
+| POST | `/api/portfolio/positions/{id}/close` | Clôture d'une position |
+| GET | `/api/leaderboard` | Classement des joueurs |
+
+## Base de données
+
+En local, sans configuration, les comptes sont stockés dans `backend/optionlab.db` (SQLite, ignoré par Git).
+En production, définir la variable d'environnement `DATABASE_URL` avec l'URL PostgreSQL (ex. Neon) :
+`postgresql://utilisateur:motdepasse@hote/base?sslmode=require`. Les tables sont créées au démarrage.
 
 ## Conventions
 
@@ -80,5 +97,5 @@ pytest -q
 
 - Smile de volatilité à partir de chaînes d'options réelles.
 - Surface P&L 3D (spot × temps), heatmap des greeks.
-- Comptes utilisateurs et portefeuille d'options virtuel (comme MAGAKE, mais en options).
+- Ordres à cours limité, historique de la valeur du portefeuille, ligues entre amis.
 - Couverture delta-gamma, options exotiques (barrières, asiatiques) en Monte-Carlo.

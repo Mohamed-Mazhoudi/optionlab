@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 .pytest_cache/
 .env
+optionlab.db
 .DS_Store
 .vscode/
 .idea/

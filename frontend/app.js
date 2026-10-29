@@ -426,7 +426,8 @@ function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll(".panel").forEach((p) => p.classList.toggle("hidden", p.id !== "tab-" + tab));
-  $("main").classList.toggle("learn-mode", tab === "learn");
+  $("main").classList.toggle("learn-mode", tab === "learn" || tab === "portfolio");
+  if (tab === "portfolio" && window.onPortfolioTab) window.onPortfolioTab();
   if (tab === "learn" && !$("lesson").innerHTML) renderLesson(0);
   if (tab === "hedge" && !$("hedge-stats").innerHTML) {
     $("h-vol").value = $("sigma").value; updateHedgeOutputs(); runHedge();

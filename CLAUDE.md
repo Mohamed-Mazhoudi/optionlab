@@ -7,6 +7,8 @@ Plateforme éducative sur les options (projet étudiant, ESILV, orientation ing�
 - `backend/app/main.py` : API FastAPI (schémas pydantic) qui appelle le moteur et sert `frontend/` sur `/` et `/static`.
 - `backend/optionlab/hedging.py` : simulation de delta hedging vectorisée (numpy). `marketdata.py` : yfinance + vol historique (cache 15 min).
 - `frontend/` : HTML/CSS/JS vanilla + Plotly (CDN). Pas de build. Toutes les requêtes passent par `post()` dans `app.js`.
+- `backend/app/db.py` : adaptateur maison sans ORM (SQLite local/tests, PostgreSQL via psycopg si DATABASE_URL). Requêtes avec « ? ».
+- `backend/app/auth.py`, `portfolio.py` : logique métier testée sans FastAPI ; `routes_portfolio.py` : routes. `frontend/portfolio.js` : onglet Portefeuille.
 - `frontend/lessons.js` : contenu des cours (tableau LESSONS). Les chiffres cités dans les leçons doivent être recalculés avec le moteur si on les modifie.
 
 ## Commandes
@@ -19,3 +21,4 @@ Plateforme éducative sur les options (projet étudiant, ESILV, orientation ing�
 - Les erreurs métier lèvent `ValueError` (message en français) ; l'API les convertit en HTTP 400.
 - Garder le moteur indépendant de FastAPI.
 - Mention « outil éducatif, pas de conseil en investissement » à conserver.
+- Ne jamais stocker de mot de passe en clair ; ne jamais exposer l'email dans le classement.
