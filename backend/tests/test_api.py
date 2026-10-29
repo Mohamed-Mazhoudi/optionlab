@@ -53,3 +53,13 @@ def test_hedging_validation():
 
 def test_market_ticker_invalide():
     assert client.get("/api/market/AAPL;DROP").status_code == 400
+
+
+def test_redirection_ancienne_adresse():
+    r = client.get("/lecons?x=1", headers={"host": "optionlab-mlpk.onrender.com"}, follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == "https://optionlab.fr/lecons?x=1"
+    r = client.get("/", headers={"host": "www.optionlab.fr"}, follow_redirects=False)
+    assert r.status_code == 301 and r.headers["location"] == "https://optionlab.fr/"
+    # l'API n'est jamais redirigée (UptimeRobot surveille /api/health sur l'ancienne adresse)
+    assert client.get("/api/health", headers={"host": "optionlab-mlpk.onrender.com"}).status_code == 200
+    assert client.get("/api/health", headers={"host": "optionlab.fr"}).status_code == 200

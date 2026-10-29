@@ -6,7 +6,7 @@ from typing import Literal
 
 import numpy as np
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -20,6 +20,23 @@ from .routes_portfolio import router as portfolio_router
 
 app = FastAPI(title="OptionLab API", version="1.0.0",
               description="Pricing Black-Scholes, greeks et stratégies d'options (simulation éducative).")
+# Redirection de l'ancienne adresse Render vers le domaine principal (pages uniquement :
+# l'API reste accessible sur les deux adresses, notamment /api/health pour UptimeRobot)
+MAIN_DOMAIN = "optionlab.fr"
+OLD_HOSTS = {"optionlab-mlpk.onrender.com", "www.optionlab.fr"}
+
+
+@app.middleware("http")
+async def redirect_to_main_domain(request, call_next):
+    host = request.headers.get("host", "").split(":")[0].lower()
+    if host in OLD_HOSTS and request.method in ("GET", "HEAD") and not request.url.path.startswith("/api/"):
+        target = f"https://{MAIN_DOMAIN}{request.url.path}"
+        if request.url.query:
+            target += "?" + request.url.query
+        return RedirectResponse(target, status_code=301)
+    return await call_next(request)
+
+
 # Base de données (SQLite en local, PostgreSQL si DATABASE_URL est défini) + routes du portefeuille
 app.state.db = Database()
 app.state.db.init_schema()
