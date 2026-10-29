@@ -3,7 +3,7 @@ import math
 import numpy as np
 import pytest
 
-from optionlab.marketdata import historical_vol, dividend_yield, fetch_market
+from optionlab.marketdata import historical_vol, dividend_yield, fetch_market, KNOWN_NAMES, _TICKER_RE
 from optionlab.hedging import simulate_paths
 
 
@@ -38,3 +38,9 @@ def test_rendement_dividende():
 def test_ticker_invalide_rejete_sans_appel_reseau():
     with pytest.raises(ValueError):
         fetch_market("AAPL; rm -rf /")
+
+
+def test_noms_connus_valides():
+    assert KNOWN_NAMES["TTE.PA"] == "TotalEnergies" and KNOWN_NAMES["^FCHI"] == "CAC 40"
+    # chaque clé est un ticker accepté et déjà en majuscules (la saisie est mise en majuscules)
+    assert all(_TICKER_RE.match(k) and k == k.upper() for k in KNOWN_NAMES)

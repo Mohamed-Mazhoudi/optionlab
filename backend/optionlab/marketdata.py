@@ -12,6 +12,34 @@ import time
 import numpy as np
 
 TRADING_DAYS = 252
+
+# Noms des titres courants : Yahoo bloque souvent l'accès aux fiches société depuis les
+# serveurs cloud (Render), alors que les cours restent disponibles.
+KNOWN_NAMES = {
+    # États-Unis
+    "AAPL": "Apple", "MSFT": "Microsoft", "GOOGL": "Alphabet (Google)", "GOOG": "Alphabet (Google)",
+    "AMZN": "Amazon", "META": "Meta Platforms", "NVDA": "NVIDIA", "TSLA": "Tesla",
+    "NFLX": "Netflix", "AMD": "AMD", "INTC": "Intel", "JPM": "JPMorgan Chase",
+    "GS": "Goldman Sachs", "MS": "Morgan Stanley", "BAC": "Bank of America", "V": "Visa",
+    "MA": "Mastercard", "KO": "Coca-Cola", "PEP": "PepsiCo", "MCD": "McDonald's",
+    "DIS": "Walt Disney", "NKE": "Nike", "BRK-B": "Berkshire Hathaway", "XOM": "ExxonMobil",
+    "JNJ": "Johnson & Johnson", "PFE": "Pfizer", "WMT": "Walmart", "BA": "Boeing",
+    # France (Euronext Paris)
+    "TTE.PA": "TotalEnergies", "MC.PA": "LVMH", "OR.PA": "L'Oréal", "AIR.PA": "Airbus",
+    "SAN.PA": "Sanofi", "BNP.PA": "BNP Paribas", "GLE.PA": "Société Générale", "ACA.PA": "Crédit Agricole",
+    "SU.PA": "Schneider Electric", "AI.PA": "Air Liquide", "RMS.PA": "Hermès", "KER.PA": "Kering",
+    "CS.PA": "AXA", "DG.PA": "Vinci", "SAF.PA": "Safran", "EL.PA": "EssilorLuxottica",
+    "BN.PA": "Danone", "RI.PA": "Pernod Ricard", "CAP.PA": "Capgemini", "ORA.PA": "Orange",
+    "RNO.PA": "Renault", "STLAP.PA": "Stellantis", "ENGI.PA": "Engie", "HO.PA": "Thales",
+    # Europe
+    "ASML.AS": "ASML", "SAP.DE": "SAP", "SIE.DE": "Siemens", "NESN.SW": "Nestlé",
+    # Indices
+    "^GSPC": "S&P 500", "^DJI": "Dow Jones", "^IXIC": "Nasdaq Composite", "^NDX": "Nasdaq 100",
+    "^FCHI": "CAC 40", "^STOXX50E": "Euro Stoxx 50", "^GDAXI": "DAX", "^FTSE": "FTSE 100",
+    "^N225": "Nikkei 225", "^VIX": "VIX (volatilité S&P 500)",
+    # Crypto
+    "BTC-USD": "Bitcoin", "ETH-USD": "Ethereum",
+}
 _CACHE: dict[str, tuple[float, dict]] = {}
 CACHE_TTL = 15 * 60  # secondes
 _TICKER_RE = re.compile(r"^[\^A-Za-z0-9.\-=]{1,20}$")
@@ -67,10 +95,14 @@ def fetch_market(ticker: str) -> dict:
         currency = info.get("currency", "") or ""
     except Exception:
         pass
-    try:
-        name = tk.info.get("shortName") or tk.info.get("longName") or ticker
-    except Exception:
-        pass
+    if ticker in KNOWN_NAMES:
+        name = KNOWN_NAMES[ticker]
+    else:
+        try:
+            info = tk.info
+            name = info.get("shortName") or info.get("longName") or ticker
+        except Exception:
+            pass
 
     divs = hist["Dividends"] if "Dividends" in hist else []
     data = {
