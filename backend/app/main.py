@@ -210,3 +210,12 @@ if FRONTEND.exists():
     @app.api_route("/trading", methods=["GET", "HEAD"], include_in_schema=False)
     def trading_page():
         return RedirectResponse("/", status_code=302)
+
+    # Appli installable (PWA) : le service worker doit être servi à la racine pour couvrir tout le site
+    @app.api_route("/sw.js", methods=["GET", "HEAD"], include_in_schema=False)
+    def service_worker():
+        return FileResponse(FRONTEND / "sw.js", media_type="application/javascript")
+
+    @app.api_route("/manifest.webmanifest", methods=["GET", "HEAD"], include_in_schema=False)
+    def manifest():
+        return FileResponse(FRONTEND / "manifest.webmanifest", media_type="application/manifest+json")

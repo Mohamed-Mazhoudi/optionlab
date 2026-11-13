@@ -13,6 +13,14 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="627">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1420'/%3E%3Cpath d='M5 24 L12 24 L14 8 L18 8 L20 24 L27 24' fill='none' stroke='%234f8cff' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#f2f4f9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d1220" media="(prefers-color-scheme: dark)">
+<link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="OptionLab">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}
@@ -52,6 +60,9 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-
 nav.views{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
 nav.views button{border:0;background:none;padding:8px 16px;border-radius:7px;font-weight:500}
 nav.views button[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+.install{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.install[hidden],.install [hidden]{display:none}
+.install button{border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:99px;padding:4px 12px;font:600 13px var(--body);cursor:pointer}
 .sim-tag{font-size:12px;border:1px solid var(--warn);color:var(--warn);border-radius:99px;padding:2px 10px;white-space:nowrap}
 
 [hidden]{display:none!important}
@@ -168,6 +179,10 @@ footer{color:var(--muted);font-size:12px;max-width:80ch}
       <small>OptionLab · Apprends les bases, puis entraîne-toi sans risquer un euro · <a href="/labo" style="color:var(--accent);font-weight:600">Passer au labo d'options →</a></small>
     </div>
     <span class="sim-tag" id="srctag">Prix simulés · argent fictif</span>
+    <div class="install" id="install" hidden>
+      <button type="button" id="install-btn" hidden>📲 Installer l'appli</button>
+      <span id="install-ios" hidden>📲 Pour installer l'appli sur iPhone : touche Partager, puis « Sur l'écran d'accueil »</span>
+    </div>
     <nav class="views" role="tablist" aria-label="Vues">
       <button role="tab" id="tab-parcours" data-view="parcours" aria-selected="true">Parcours</button>
       <button role="tab" id="tab-simulateur" data-view="simulateur" aria-selected="false">Simulateur</button>
@@ -768,6 +783,20 @@ loadAll().then(ok=>{
   document.querySelectorAll("#mode button").forEach(b=>b.disabled=false);
   if(!S.journal.length&&!S.orders.length)setMode("live",true);else $("modenote").textContent="Les cours réels sont disponibles : choisis « Cours réels » ou « Replay réel ».";
 });
+</script>
+<script>
+// Appli installable : service worker + bouton « Installer l'appli » (Android/ordinateur) ou consigne iPhone
+(() => {
+  if ("serviceWorker" in navigator) addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+  const box = document.getElementById("install"), btn = document.getElementById("install-btn"), ios = document.getElementById("install-ios");
+  if (matchMedia("(display-mode: standalone)").matches || navigator.standalone === true) return;   // déjà dans l'appli
+  let prompt = null;
+  addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); prompt = e; box.hidden = false; btn.hidden = false; });
+  btn.addEventListener("click", async () => { if (!prompt) return; prompt.prompt(); await prompt.userChoice; prompt = null; box.hidden = true; });
+  addEventListener("appinstalled", () => { box.hidden = true; });
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  if (isIOS) { box.hidden = false; ios.hidden = false; }
+})();
 </script>
 </body>
 </html>

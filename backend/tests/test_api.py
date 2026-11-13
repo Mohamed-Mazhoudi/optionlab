@@ -84,6 +84,27 @@ def test_pages_et_statiques_revalides_apres_deploiement():
     assert "no-cache" not in client.get("/api/health").headers.get("cache-control", "")
 
 
+def test_appli_installable():
+    import json
+    r = client.get("/manifest.webmanifest")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/manifest+json")
+    m = json.loads(r.text)
+    assert m["display"] == "standalone" and m["scope"] == "/" and m["start_url"].startswith("/")
+    sizes = {i["sizes"] for i in m["icons"]}
+    assert {"192x192", "512x512"} <= sizes and any(i.get("purpose") == "maskable" for i in m["icons"])
+    for icon in m["icons"]:
+        img = client.get(icon["src"])
+        assert img.status_code == 200 and img.content[:8] == b"\x89PNG\r\n\x1a\n"
+    sw = client.get("/sw.js")
+    assert sw.status_code == 200 and "javascript" in sw.headers["content-type"]
+    assert sw.headers["cache-control"] == "no-cache"          # nouvelle version prise à chaque déploiement
+    assert '"/api/"' in sw.text                                # l'API n'est jamais mise en cache
+    for page in ("/", "/labo"):
+        html = client.get(page).text
+        assert 'rel="manifest"' in html and "/sw.js" in html and "apple-touch-icon" in html
+    assert client.get("/static/icons/apple-touch-icon.png").status_code == 200
+
+
 def test_accueil_trading_et_labo():
     r = client.get("/")
     assert r.status_code == 200 and "Trading Pas à Pas" in r.text and 'href="/labo"' in r.text
