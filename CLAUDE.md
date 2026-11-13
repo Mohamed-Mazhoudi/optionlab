@@ -11,6 +11,7 @@ Plateforme éducative sur les options (projet étudiant, ESILV, orientation ing�
 - `backend/app/auth.py`, `portfolio.py` : logique métier testée sans FastAPI ; `routes_portfolio.py` : routes. `frontend/portfolio.js` : onglet Portefeuille.
 - `backend/app/advisor.py` (alertes déterministes), `coach.py` (API Claude via urllib, outils proposer_strategie / proposer_ordre, quotas dans la table coach_usage), `insights.py` (Finnhub, cache 30 min) ; routes dans `routes_coach.py`. Tests avec appels simulés (`caller`, `news_fetch`), jamais d'appel réseau en test.
 - `frontend/trading.html` (page d'accueil, servie sur `/` ; le labo `index.html` est sur `/labo`, `/trading` redirige vers `/`) : page autonome « Trading Pas à Pas » (cours débutant, lexique, simulateur). Elle lit les bougies réelles d'une minute via `/api/trading/candles/{ticker}` (`backend/optionlab/intraday.py`, yfinance, cache 1 min, liste fermée TRADING_TICKERS) et repasse en prix simulés si l'API ne répond pas. Le compte du simulateur vit dans le navigateur, pas en base.
+- Appli installable (PWA) : `frontend/manifest.webmanifest` et `frontend/sw.js` servis à la racine (`/manifest.webmanifest`, `/sw.js`), icônes dans `frontend/icons/`. Le service worker fait « réseau d'abord » avec repli hors ligne et ne met jamais `/api/` en cache ; changer `CACHE` dans `sw.js` si la liste SHELL change.
 - `frontend/lessons.js` : contenu des cours (tableau LESSONS). Les chiffres cités dans les leçons doivent être recalculés avec le moteur si on les modifie.
 
 ## Commandes
