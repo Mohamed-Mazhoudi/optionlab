@@ -63,3 +63,21 @@ def test_redirection_ancienne_adresse():
     # l'API n'est jamais redirigée (UptimeRobot surveille /api/health sur l'ancienne adresse)
     assert client.get("/api/health", headers={"host": "optionlab-mlpk.onrender.com"}).status_code == 200
     assert client.get("/api/health", headers={"host": "optionlab.fr"}).status_code == 200
+
+
+def test_trading_bougies_avec_cours_simules():
+    from optionlab import intraday
+    intraday._CACHE.clear()
+    intraday._CACHE[("AAPL", "1m")] = (float("inf"), [(60, 10.0, 11.0, 9.0, 10.5), (120, 10.5, 12.0, 10.0, 11.0)])
+    try:
+        data = client.get("/api/trading/candles/AAPL").json()
+        assert data["t"] == [60, 120] and data["c"] == [10.5, 11.0]
+        assert client.get("/api/trading/candles/AAPL?since=120").json()["t"] == [120]
+        assert client.get("/api/trading/candles/TSLA").status_code == 400
+    finally:
+        intraday._CACHE.clear()
+
+
+def test_page_trading_servie():
+    r = client.get("/trading")
+    assert r.status_code == 200 and "Trading Pas à Pas" in r.text

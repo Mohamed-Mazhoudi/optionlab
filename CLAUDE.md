@@ -9,6 +9,7 @@ Plateforme éducative sur les options (projet étudiant, ESILV, orientation ing�
 - `frontend/` : HTML/CSS/JS vanilla + Plotly (CDN). Pas de build. Toutes les requêtes passent par `post()` dans `app.js`.
 - `backend/app/db.py` : adaptateur maison sans ORM (SQLite local/tests, PostgreSQL via psycopg si DATABASE_URL). Requêtes avec « ? ».
 - `backend/app/auth.py`, `portfolio.py` : logique métier testée sans FastAPI ; `routes_portfolio.py` : routes. `frontend/portfolio.js` : onglet Portefeuille.
+- `frontend/trading.html` (servi sur `/trading`) : page autonome « Trading Pas à Pas » (cours débutant, lexique, simulateur). Elle lit les bougies réelles d'une minute via `/api/trading/candles/{ticker}` (`backend/optionlab/intraday.py`, yfinance, cache 1 min, liste fermée TRADING_TICKERS) et repasse en prix simulés si l'API ne répond pas. Le compte du simulateur vit dans le navigateur, pas en base.
 - `frontend/lessons.js` : contenu des cours (tableau LESSONS). Les chiffres cités dans les leçons doivent être recalculés avec le moteur si on les modifie.
 
 ## Commandes

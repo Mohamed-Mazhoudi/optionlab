@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Apprendre les bases du trading pas à pas et s'entraîner sur un simulateur avec les cours réels. Outil éducatif, pas de conseil en investissement.">
+<title>Trading Pas à Pas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}
+/* Layout : un en-tête fin, deux vues (Parcours = liste + leçon ; Simulateur = liste de marchés | graphique + tableaux | ticket d'ordre). */
+:root{
+  --bg:#f2f4f9; --surface:#ffffff; --ink:#131a2b; --muted:#5a6580; --line:#dce1ec;
+  --accent:#3046c9; --accent-soft:#e7ebfc; --on-accent:#ffffff;
+  --up:#0b8566; --down:#cf3d36; --warn:#a86a12; --up-soft:#e0f4ee; --down-soft:#fbe7e5;
+  --display:"Sora","Segoe UI",system-ui,sans-serif;
+  --body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0d1220; --surface:#161d2f; --ink:#e8ecf6; --muted:#94a1be; --line:#273150;
+  --accent:#8d9eff; --accent-soft:#202a52; --on-accent:#0d1220;
+  --up:#35c69b; --down:#ff7b71; --warn:#f0b860; --up-soft:#12342d; --down-soft:#3d1f22; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0d1220; --surface:#161d2f; --ink:#e8ecf6; --muted:#94a1be; --line:#273150;
+  --accent:#8d9eff; --accent-soft:#202a52; --on-accent:#0d1220;
+  --up:#35c69b; --down:#ff7b71; --warn:#f0b860; --up-soft:#12342d; --down-soft:#3d1f22; color-scheme:dark }
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+.wrap{max-width:1320px;margin:0 auto;padding-block:16px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;line-height:1.2}
+h1{font-size:20px;font-weight:700;letter-spacing:-.01em}
+h2{font-size:24px;font-weight:600}
+h3{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.up{color:var(--up)} .down{color:var(--down)} .muted{color:var(--muted)}
+
+header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;justify-content:space-between}
+.brand{display:flex;flex-direction:column}
+.brand small{color:var(--muted);font-size:13px}
+nav.views{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
+nav.views button{border:0;background:none;padding:8px 16px;border-radius:7px;font-weight:500}
+nav.views button[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+.sim-tag{font-size:12px;border:1px solid var(--warn);color:var(--warn);border-radius:99px;padding:2px 10px;white-space:nowrap}
+
+[hidden]{display:none!important}
+.simview{display:flex;flex-direction:column;gap:16px}
+.steps li.chap{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:12px 10px 4px}
+.key{border-left:3px solid var(--accent);padding:6px 12px;background:var(--accent-soft);border-radius:0 8px 8px 0;max-width:66ch}
+details{font-size:13px}
+details summary{cursor:pointer;color:var(--accent);font-weight:500}
+details dl{margin:8px 0 0;display:grid;grid-template-columns:minmax(110px,auto) 1fr;gap:6px 14px}
+details dt{font-weight:600}details dd{margin:0;color:var(--muted)}
+.guide{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center}
+.guide ol{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px}
+.guide li.ok{color:var(--up)}
+.gloss{display:flex;flex-direction:column;gap:14px}
+.gloss input{font:inherit;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:9px 12px;max-width:360px;width:100%}
+.gloss dl{margin:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px 28px}
+.gloss dt{font-weight:600}.gloss dd{margin:0;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0}
+
+/* Parcours */
+.course{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.steps{display:flex;flex-direction:column;gap:12px}
+.progress{height:6px;background:var(--line);border-radius:99px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);width:0}
+.steps ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.steps li button{width:100%;text-align:left;border:0;background:none;padding:9px 10px;border-radius:8px;display:flex;gap:10px;align-items:baseline}
+.steps li button[aria-current="true"]{background:var(--accent-soft)}
+.steps .n{font-family:var(--mono);font-size:12px;color:var(--muted);width:22px;flex:none}
+.steps .ok{margin-left:auto;color:var(--up);font-weight:600}
+.lesson{display:flex;flex-direction:column;gap:16px}
+.lesson .body{display:flex;flex-direction:column;gap:12px;max-width:66ch}
+.lesson .eyebrow{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.lesson b{font-weight:600}
+.fig{display:flex;flex-wrap:wrap;gap:16px;align-items:center}
+.fig svg{max-width:100%;height:auto;flex:none}
+.box{border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px;max-width:66ch}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opts button{text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 12px}
+.opts button:hover{border-color:var(--accent)}
+.opts button.good{border-color:var(--up);background:var(--up-soft)}
+.opts button.bad{border-color:var(--down);background:var(--down-soft)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:500}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.badge{font-size:12px;border-radius:99px;padding:2px 10px;background:var(--accent-soft);color:var(--accent);font-weight:500}
+.badge.done{background:var(--up-soft);color:var(--up)}
+
+/* Simulateur */
+.account{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px 20px}
+.account div{display:flex;flex-direction:column;min-width:0}
+.account span{font-size:12px;color:var(--muted)}
+.account strong{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:17px;font-weight:500}
+.sim{display:grid;grid-template-columns:220px minmax(0,1fr) 310px;grid-template-areas:"watch chart ticket" "watch tables ticket";gap:16px;align-items:start}
+.watch{grid-area:watch;display:flex;flex-direction:column;gap:10px;padding:12px}
+.watch ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.watch li button{width:100%;border:0;background:none;border-radius:8px;padding:8px;display:grid;grid-template-columns:1fr auto;gap:0 8px;text-align:left}
+.watch li button[aria-pressed="true"]{background:var(--accent-soft)}
+.watch .nm{font-weight:600} .watch .cl{font-size:12px;color:var(--muted)}
+.watch .px{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.watch .ch{font-family:var(--mono);font-size:12px;text-align:right}
+.chartp{grid-area:chart;display:flex;flex-direction:column;gap:12px}
+.chead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between}
+.quote{display:flex;gap:16px;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.quote small{font-family:var(--body);color:var(--muted);margin-right:4px}
+canvas{width:100%;height:340px;display:block}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:6px 11px;font-size:13px;border-left:1px solid var(--line)}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent)}
+.seg button:disabled,.watch li button:disabled{opacity:.4;cursor:not-allowed}
+.controls{display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center;justify-content:space-between}
+.controls label{font-size:12px;color:var(--muted);margin-right:6px}
+.event{font-size:13px;border-left:3px solid var(--accent);padding:4px 10px;background:var(--accent-soft);border-radius:0 6px 6px 0}
+.ticket{grid-area:ticket;display:flex;flex-direction:column;gap:12px}
+.side{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.side button{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px;display:flex;flex-direction:column;align-items:center;font-weight:600}
+.side button small{font-family:var(--mono);font-weight:400}
+.side button.buy[aria-pressed="true"]{background:var(--up-soft);border-color:var(--up);color:var(--up)}
+.side button.sell[aria-pressed="true"]{background:var(--down-soft);border-color:var(--down);color:var(--down)}
+.field{display:flex;flex-direction:column;gap:3px}
+.field label{font-size:12px;color:var(--muted)}
+.field input{font:inherit;font-family:var(--mono);background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+dl.est{margin:0;display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:13px}
+dl.est dt{color:var(--muted)} dl.est dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.msg{font-size:13px;min-height:1.5em}
+.tables{grid-area:tables;display:flex;flex-direction:column;gap:16px}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{font-weight:500;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;font-family:var(--mono);font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+td.t{font-family:var(--body)}
+td .btn{padding:3px 10px;font-size:12px;font-family:var(--body)}
+.empty{color:var(--muted);font-size:13px}
+footer{color:var(--muted);font-size:12px;max-width:80ch}
+@media (max-width:600px){details dl{grid-template-columns:1fr;gap:0}details dd{margin-bottom:8px}}
+@media (max-width:1050px){
+  .sim{grid-template-columns:minmax(0,1fr);grid-template-areas:"watch" "chart" "ticket" "tables"}
+  .watch ul{flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:4px}
+  .watch li{flex:none;min-width:150px}
+  .course{grid-template-columns:minmax(0,1fr)}
+  canvas{height:280px}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <h1>Trading Pas à Pas</h1>
+      <small><a href="/" style="color:var(--accent)">← Retour à OptionLab</a> · Apprends les bases, puis entraîne-toi sans risquer un euro</small>
+    </div>
+    <span class="sim-tag" id="srctag">Prix simulés · argent fictif</span>
+    <nav class="views" role="tablist" aria-label="Vues">
+      <button role="tab" id="tab-parcours" data-view="parcours" aria-selected="true">Parcours</button>
+      <button role="tab" id="tab-simulateur" data-view="simulateur" aria-selected="false">Simulateur</button>
+      <button role="tab" id="tab-lexique" data-view="lexique" aria-selected="false">Lexique</button>
+    </nav>
+  </header>
+
+  <!-- PARCOURS -->
+  <main id="view-parcours" class="course">
+    <aside class="panel steps">
+      <h3>Le parcours</h3>
+      <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+      <div class="muted" id="progtxt" style="font-size:13px"></div>
+      <ol id="steplist"></ol>
+    </aside>
+    <article class="panel lesson" id="lesson"></article>
+  </main>
+
+  <!-- SIMULATEUR -->
+  <main id="view-lexique" class="panel gloss" hidden>
+    <div><h2>Lexique</h2><p class="muted">Tous les mots du trading, expliqués en une phrase.</p></div>
+    <input id="gq" type="search" placeholder="Chercher un mot (ex. marge, pip, spread)" aria-label="Chercher un mot">
+    <dl id="glist"></dl>
+  </main>
+
+  <main id="view-simulateur" class="simview" hidden>
+    <section class="panel guide" id="guide"></section>
+    <section class="panel account" aria-label="Compte">
+      <div><span>Solde</span><strong id="a-bal"></strong></div>
+      <div><span>Équité (solde + P&amp;L latent)</span><strong id="a-eq"></strong></div>
+      <div><span>P&amp;L latent</span><strong id="a-pnl"></strong></div>
+      <div><span>Marge utilisée</span><strong id="a-used"></strong></div>
+      <div><span>Marge libre</span><strong id="a-free"></strong></div>
+      <div><span>Niveau de marge</span><strong id="a-lvl"></strong></div>
+      <details style="grid-column:1/-1"><summary>Comprendre ces chiffres</summary><dl>
+        <dt>Solde</dt><dd>L'argent de ton compte, sans compter les positions ouvertes. Il ne change que lorsque tu clôtures un trade ou paies des frais.</dd>
+        <dt>Équité</dt><dd>Ce que vaudrait ton compte si tu fermais tout maintenant : solde + P&amp;L latent.</dd>
+        <dt>P&amp;L latent</dt><dd>Le gain ou la perte de tes positions encore ouvertes. Il bouge à chaque variation de prix.</dd>
+        <dt>Marge utilisée</dt><dd>La somme bloquée par le courtier pour garantir tes positions : valeur de la position ÷ levier.</dd>
+        <dt>Marge libre</dt><dd>Équité − marge utilisée. C'est ce qu'il te reste pour ouvrir d'autres positions.</dd>
+        <dt>Niveau de marge</dt><dd>Équité ÷ marge utilisée. Sous 100 %, tu ne peux plus rien ouvrir. Sous 50 %, le courtier ferme tout : c'est l'appel de marge.</dd>
+      </dl></details>
+    </section>
+
+    <div class="sim">
+      <aside class="panel watch">
+        <h3>Marchés</h3>
+        <ul id="watchlist"></ul>
+      </aside>
+
+      <section class="panel chartp">
+        <div class="chead">
+          <div><h2 id="c-name" style="font-size:19px"></h2><span class="muted" id="c-sub" style="font-size:13px"></span></div>
+          <div class="quote">
+            <span><small>Vente (bid)</small><span id="c-bid" class="down"></span></span>
+            <span><small>Achat (ask)</small><span id="c-ask" class="up"></span></span>
+            <span><small>Spread</small><span id="c-sp"></span></span>
+          </div>
+        </div>
+        <canvas id="cv" aria-label="Graphique en bougies de 5 minutes"></canvas>
+        <div class="controls">
+          <div><label>Source des prix</label>
+            <span class="seg" id="mode">
+              <button data-m="live" aria-pressed="false" disabled>Cours réels</button><button data-m="replay" aria-pressed="false" disabled>Replay réel</button><button data-m="sim" aria-pressed="true">Simulé</button>
+            </span>
+          </div>
+          <div id="speedbox"><label>Vitesse</label>
+            <span class="seg" id="speed">
+              <button data-s="0">Pause</button><button data-s="1">1 min/s</button><button data-s="5">5 min/s</button><button data-s="30">30 min/s</button>
+            </span>
+          </div>
+          <div id="scenbox"><label>Scénario sur ce marché</label>
+            <span class="seg" id="scen">
+              <button data-k="trend">Tendance</button><button data-k="news">Annonce</button><button data-k="crash">Krach</button><button data-k="calm">Calme</button>
+            </span>
+          </div>
+          <span class="num muted" id="clock" style="font-size:13px"></span>
+        </div>
+        <p class="muted" id="modenote" style="font-size:13px">Recherche des cours réels…</p>
+        <div class="event" id="event" aria-live="polite">Le marché tourne. Choisis un marché à gauche et passe ton premier ordre à droite.</div>
+      </section>
+
+      <aside class="panel ticket">
+        <h3>Passer un ordre</h3>
+        <div class="side">
+          <button class="buy" id="t-buy" aria-pressed="true">Acheter<small id="t-ask"></small></button>
+          <button class="sell" id="t-sell" aria-pressed="false">Vendre<small id="t-bid"></small></button>
+        </div>
+        <span class="seg" id="otype" style="align-self:flex-start">
+          <button data-t="market" aria-pressed="true">Au marché</button><button data-t="limit" aria-pressed="false">Limite</button><button data-t="stop" aria-pressed="false">Stop</button>
+        </span>
+        <div class="field"><label for="t-qty" id="t-qtyl">Quantité</label><input id="t-qty" inputmode="decimal"></div>
+        <div class="field" id="t-pxf" hidden><label for="t-px">Prix de déclenchement</label><input id="t-px" inputmode="decimal"></div>
+        <div class="two">
+          <div class="field"><label for="t-sl">Stop-loss (optionnel)</label><input id="t-sl" inputmode="decimal"></div>
+          <div class="field"><label for="t-tp">Take-profit (optionnel)</label><input id="t-tp" inputmode="decimal"></div>
+        </div>
+        <button class="btn" id="t-size">Calculer la taille pour risquer 1 %</button>
+        <dl class="est">
+          <dt>Valeur de la position</dt><dd id="e-not"></dd>
+          <dt id="e-ml">Marge requise</dt><dd id="e-mar"></dd>
+          <dt>Commission</dt><dd id="e-com"></dd>
+          <dt>Coût du spread</dt><dd id="e-spc"></dd>
+          <dt>Perte si le stop est touché</dt><dd id="e-risk"></dd>
+        </dl>
+        <button class="btn primary" id="t-go">Envoyer l'ordre</button>
+        <button class="btn" id="t-apply" hidden>Appliquer SL / TP à ma position</button>
+        <div class="msg" id="t-msg" aria-live="polite"></div>
+        <details><summary>Comment remplir ce ticket ?</summary><dl style="grid-template-columns:1fr;gap:0">
+          <dt>1. Le sens</dt><dd style="margin-bottom:8px">Acheter si tu penses que le prix va monter, Vendre si tu penses qu'il va baisser.</dd>
+          <dt>2. Le type</dt><dd style="margin-bottom:8px">Au marché : tout de suite. Limite : à un meilleur prix que l'actuel. Stop : si le prix franchit un niveau.</dd>
+          <dt>3. Le stop-loss</dt><dd style="margin-bottom:8px">Le prix où tu acceptes d'avoir eu tort. Sous le prix pour un achat, au-dessus pour une vente.</dd>
+          <dt>4. La quantité</dt><dd style="margin-bottom:8px">Clique sur « Calculer la taille » : elle est choisie pour que le stop te coûte 1 % du compte.</dd>
+          <dt>5. Le take-profit</dt><dd>Ton objectif de gain. Vise au moins deux fois la distance du stop.</dd>
+        </dl></details>
+      </aside>
+
+      <div class="tables">
+        <section class="panel"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3>Positions ouvertes</h3></div><div class="tw" id="postab"></div></section>
+        <section class="panel"><h3 style="margin-bottom:8px">Ordres en attente</h3><div class="tw" id="ordtab"></div></section>
+        <section class="panel"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3>Journal de trading</h3><button class="btn" id="reset" style="font-size:12px;padding:4px 10px">Remettre le compte à 10 000 $</button></div><div class="tw" id="jtab"></div></section>
+      </div>
+    </div>
+  </main>
+
+  <footer>Outil pédagogique, pas un conseil en investissement. Selon la source choisie, les prix sont les cours réels de Yahoo Finance (parfois retardés de 15 minutes) ou générés par un modèle. Le spread, le slippage et les commissions sont toujours modélisés. Les leviers maximum sont ceux imposés aux particuliers en Europe (ESMA) : 1:30 sur les grandes paires de devises, 1:20 sur les grands indices, 1:5 sur les actions, 1:2 sur les cryptos.</footer>
+</div>
+
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* ---------- Marchés ---------- */
+const INS=[
+ {id:"AAPL",name:"Apple",cls:"Action",p0:230,vol:.28,sp:2,lev:5,com:.001,step:1,dec:2,unit:"actions",q0:10},
+ {id:"NVDA",name:"Nvidia",cls:"Action",p0:140,vol:.45,sp:2.5,lev:5,com:.001,step:1,dec:2,unit:"actions",q0:10},
+ {id:"SPX",name:"S&P 500",cls:"Indice (CFD)",p0:6000,vol:.15,sp:1,lev:20,com:0,step:.1,dec:1,unit:"contrats",q0:1},
+ {id:"EURUSD",name:"EUR/USD",cls:"Forex",p0:1.085,vol:.07,sp:.8,lev:30,com:0,step:1000,dec:5,unit:"unités (100 000 = 1 lot)",q0:10000},
+ {id:"GBPUSD",name:"GBP/USD",cls:"Forex",p0:1.27,vol:.08,sp:1.2,lev:30,com:0,step:1000,dec:5,unit:"unités (100 000 = 1 lot)",q0:10000},
+ {id:"BTCUSD",name:"Bitcoin",cls:"Crypto",p0:95000,vol:.55,sp:4,lev:2,com:.001,step:.001,dec:1,unit:"BTC",q0:.05},
+ {id:"ETHUSD",name:"Ethereum",cls:"Crypto",p0:3200,vol:.7,sp:5,lev:2,com:.001,step:.01,dec:2,unit:"ETH",q0:1}
+];
+const M={};
+const gauss=()=>{let u=0,v=0;while(!u)u=Math.random();v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+const CAND=5, HIST=80, START=9*60+30;
+const S={bal:10000,pos:{},orders:[],journal:[],sel:"AAPL",speed:1,tick:0,side:1,type:"market",oid:1,dirty:true};
+let flags=store.get("tpp-flags",{}), done=store.get("tpp-done",{});
+
+let MODE="sim",HAVE=false,T0=0;const DATA={};
+const YT={AAPL:"AAPL",NVDA:"NVDA",SPX:"^GSPC",EURUSD:"EURUSD=X",GBPUSD:"GBPUSD=X",BTCUSD:"BTC-USD",ETHUSD:"ETH-USD"};
+const dfull=new Intl.DateTimeFormat("fr-FR",{timeZone:"Europe/Paris",weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+const dhm=new Intl.DateTimeFormat("fr-FR",{timeZone:"Europe/Paris",hour:"2-digit",minute:"2-digit"});
+function initMarket(i){M[i.id]=Object.assign({},i,{sig:i.vol/Math.sqrt(252*390)});resetMarket(M[i.id])}
+function resetMarket(m){
+  Object.assign(m,{mid:m.p0,volM:1,drift:0,sd:0,sv:1,st:0,candles:[],cur:null,ri:0,lastT:0,gap:false});
+  const d=DATA[m.id];
+  if(MODE==="sim"){for(let t=-HIST*CAND;t<0;t++)stepPrice(m,t)}
+  else if(d){let end=d.t.length;if(MODE==="replay"){end=0;while(end<d.t.length&&d.t[end]<=T0)end++;end=Math.max(1,end)}
+    for(;m.ri<end;m.ri++)applyBar(m,m.ri)}
+  else{quote(m);m.cur={t:0,lab:"",o:m.mid,h:m.mid,l:m.mid,c:m.mid}}
+  m.open=m.mid;
+}
+/* Une bougie réelle d'une minute : met à jour la bougie de 5 min affichée et renvoie les prix traversés dans l'ordre. */
+function applyBar(m,i){
+  const d=DATA[m.id],t=d.t[i],o=d.o[i],h=d.h[i],l=d.l[i],c=d.c[i],b=Math.floor(t/300);
+  if(!m.cur||m.cur.b!==b){if(m.cur)m.candles.push(m.cur);if(m.candles.length>300)m.candles.shift();m.cur={b,t,lab:dhm.format(new Date(b*300000)),o,h,l,c}}
+  else{m.cur.h=Math.max(m.cur.h,h);m.cur.l=Math.min(m.cur.l,l);m.cur.c=c}
+  const v=(h-l)/(c*m.sig*1.6);m.volM=Math.min(4,Math.max(.7,.7*m.volM+.3*(v||.7)));
+  m.gap=m.lastT>0&&t-m.lastT>1800;m.lastT=t;m.mid=c;quote(m);
+  return c>=o?[o,l,h,c]:[o,h,l,c];
+}
+function feed(m,i,closeOnly){const ps=applyBar(m,i);for(const p of closeOnly?[ps[3]]:ps){m.mid=p;quote(m);processMarket(m)}}
+function replayTick(){
+  const s=M[S.sel],ds=DATA[s.id];
+  if(s.ri>=ds.t.length){setSpeed(0);say("Fin de l'historique disponible pour "+s.name+". Choisis un autre marché ou repasse en cours réels.");return false}
+  S.now=ds.t[s.ri];
+  for(const i of INS){const m=M[i.id],d=DATA[i.id];if(!d)continue;while(m.ri<d.t.length&&d.t[m.ri]<=S.now){feed(m,m.ri);m.ri++}}
+  if(s.gap)say("Nouvelle séance sur "+s.name+" : le prix rouvre à "+px(s,s.mid)+". L'écart avec la clôture précédente est un gap réel.");
+  return true;
+}
+const closed=m=>MODE==="live"&&S.now-m.lastT>1800;
+const CLOSEDMSG="Ce marché est fermé en ce moment : aucun ordre au marché ne peut être exécuté. Choisis une crypto (ouverte 24 h/24), place un ordre limite, ou passe en Replay réel.";
+function stepPrice(m,t){
+  m.volM=Math.min(4,Math.max(.4,m.volM+.04*(1-m.volM)+.05*gauss()));
+  if(Math.random()<.005)m.drift=m.sig*.05*gauss();
+  let r=m.drift+m.sig*m.volM*(m.st>0?m.sv:1)*gauss();
+  if(m.st>0){r+=m.sd;m.st--}
+  if(Math.random()<.002){r+=m.sig*(4+6*Math.random())*(Math.random()<.5?-1:1);m.volM=Math.min(4,m.volM+1)}
+  m.mid*=Math.exp(r);
+  quote(m);
+  if(!m.cur||t%CAND===0){if(m.cur)m.candles.push(m.cur);if(m.candles.length>300)m.candles.shift();m.cur={t,lab:hhmm(t),o:m.mid,h:m.mid,l:m.mid,c:m.mid}}
+  m.cur.h=Math.max(m.cur.h,m.mid);m.cur.l=Math.min(m.cur.l,m.mid);m.cur.c=m.mid;
+}
+function quote(m){const hs=m.mid*m.sp/2e4*Math.max(.7,m.volM*(m.st>0?m.sv:1));m.bid=m.mid-hs;m.ask=m.mid+hs}
+
+/* ---------- Formats ---------- */
+const money=n=>(n<0?"−":"")+Math.abs(n).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})+" $";
+const px=(m,v)=>v==null?"":v.toLocaleString("fr-FR",{minimumFractionDigits:m.dec,maximumFractionDigits:m.dec});
+const stepDec=m=>(String(m.step).split(".")[1]||"").length;
+const rq=(m,q)=>+(Math.round(q/m.step)*m.step).toFixed(stepDec(m));
+const qf=(m,q)=>Math.abs(q).toLocaleString("fr-FR",{maximumFractionDigits:stepDec(m)});
+const parse=s=>{const v=parseFloat(String(s).replace(/\s/g,"").replace(",","."));return isFinite(v)?v:NaN};
+const clock=t=>{if(MODE!=="sim")return dfull.format(new Date(S.now*1000));const mn=START+t,d=Math.floor(mn/1440)+1,h=Math.floor(mn%1440/60),mi=mn%60;return "Jour "+d+" · "+String(h).padStart(2,"0")+":"+String(mi).padStart(2,"0")};
+const hhmm=t=>{const mn=((START+t)%1440+1440)%1440;return String(Math.floor(mn/60)).padStart(2,"0")+":"+String(mn%60).padStart(2,"0")};
+
+/* ---------- Compte ---------- */
+const upnl=(m,p)=>p.q>0?(m.bid-p.avg)*p.q:(m.ask-p.avg)*p.q;
+const totalPnl=()=>Object.keys(S.pos).reduce((a,k)=>a+upnl(M[k],S.pos[k]),0);
+const equity=()=>S.bal+totalPnl();
+const used=()=>Object.keys(S.pos).reduce((a,k)=>a+Math.abs(S.pos[k].q)*M[k].mid/M[k].lev,0);
+function marginAfter(m,q){const p=S.pos[m.id],old=p?p.q:0,nw=old+q;return used()-Math.abs(old)*m.mid/m.lev+Math.abs(nw)*m.mid/m.lev}
+function reduces(m,q){const p=S.pos[m.id];return p&&Math.sign(p.q)!==Math.sign(q)&&Math.abs(q)<=Math.abs(p.q)+1e-9}
+function flag(k){if(!flags[k]){flags[k]=1;store.set("tpp-flags",flags);renderCourse();renderGuide()}}
+function say(t){$("event").textContent=clock(S.tick)+" — "+t}
+
+function exec(m,q,base,reason,slip){
+  const sg=Math.sign(q);
+  const fill=base+(slip?sg*m.mid*m.sp/1e4*.5*Math.random()*m.volM:0);
+  const com=m.com?Math.max(1,Math.abs(q)*fill*m.com):0;
+  const p=S.pos[m.id];let pnl=null;const avg0=p?p.avg:0,not=Math.abs(q)*fill;
+  if(!p)S.pos[m.id]={q,avg:fill,sl:null,tp:null};
+  else if(Math.sign(p.q)===sg){p.avg=(p.avg*p.q+fill*q)/(p.q+q);p.q=rq(m,p.q+q)}
+  else{
+    const c=Math.min(Math.abs(q),Math.abs(p.q));pnl=(fill-p.avg)*c*Math.sign(p.q);S.bal+=pnl;
+    const rest=rq(m,p.q+q);
+    if(Math.abs(rest)<1e-9)delete S.pos[m.id];
+    else if(Math.sign(rest)===Math.sign(p.q))p.q=rest;
+    else S.pos[m.id]={q:rest,avg:fill,sl:null,tp:null};
+  }
+  S.bal-=com;
+  S.journal.unshift({t:S.tick,ts:clock(),id:m.id,q,fill,com,pnl,reason});if(S.journal.length>60)S.journal.pop();
+  S.dirty=true;
+  const u=m.cls==="Forex"?"":" "+(m.unit.split(" ")[0]),comT=com?" Commission : "+money(com)+".":" Pas de commission : le courtier se paie avec le spread.";
+  if(pnl===null){const per=m.cls==="Forex"?"Chaque pip (0,0001) te fait gagner ou perdre "+money(Math.abs(q)*.0001):"Chaque variation de "+(m.dec>=2?"1 $":"1 point")+" du prix te fait gagner ou perdre "+money(Math.abs(q));
+    S.exp="Tu as "+(sg>0?"acheté ":"vendu à découvert ")+qf(m,q)+u+" "+m.name+" à "+px(m,fill)+". Valeur de la position : "+money(not)+", marge bloquée : "+money(not/m.lev)+" (levier 1:"+m.lev+")."+comT+" "+per+". Ton P&L démarre en négatif : c'est le spread."}
+  else S.exp="Tu as "+(sg>0?"racheté ":"vendu ")+qf(m,q)+u+" "+m.name+" à "+px(m,fill)+" (entrée à "+px(m,avg0)+"). Résultat : "+(sg<0?"("+px(m,fill)+" − "+px(m,avg0)+")":"("+px(m,avg0)+" − "+px(m,fill)+")")+" × "+qf(m,q)+" = "+money(pnl)+"."+comT+" Ce résultat est maintenant dans ton solde.";
+  if(pnl!==null)flag("close");
+  const np=S.pos[m.id];if(np&&np.q<0)flag("short");
+  if(Object.keys(S.pos).reduce((a,k)=>a+Math.abs(S.pos[k].q)*M[k].mid,0)>equity())flag("lev");
+  return fill;
+}
+function setProt(m,sl,tp){const p=S.pos[m.id];if(!p)return;if(sl!=null){p.sl=sl;flag("sltp")}if(tp!=null)p.tp=tp;S.dirty=true}
+
+function processMarket(m){
+  for(const o of S.orders.slice()){
+    if(o.id!==m.id)continue;
+    const buy=o.q>0;let hit=false,base=0,slip=false;
+    if(o.type==="limit"){if(buy?m.ask<=o.px:m.bid>=o.px){hit=true;base=o.px}}
+    else{if(buy?m.ask>=o.px:m.bid<=o.px){hit=true;base=buy?Math.max(m.ask,o.px):Math.min(m.bid,o.px);slip=true}}
+    if(!hit)continue;
+    S.orders.splice(S.orders.indexOf(o),1);S.dirty=true;
+    if(!reduces(m,o.q)&&marginAfter(m,o.q)>equity()){say("Ordre "+(o.type==="limit"?"limite":"stop")+" sur "+m.name+" annulé : marge insuffisante au déclenchement.");continue}
+    const f=exec(m,o.q,base,o.type==="limit"?"Ordre limite":"Ordre stop",slip);
+    const p=S.pos[m.id];if(p&&Math.sign(p.q)===Math.sign(o.q))setProt(m,o.sl,o.tp);
+    say("Ordre "+(o.type==="limit"?"limite":"stop")+" déclenché. "+S.exp);
+  }
+  const p=S.pos[m.id];if(!p)return;
+  const long=p.q>0,ref=long?m.bid:m.ask;
+  if(p.sl!=null&&(long?ref<=p.sl:ref>=p.sl)){
+    const sl=p.sl,f=exec(m,-p.q,ref,"Stop-loss",true);
+    say("Stop-loss touché sur "+m.name+" (stop demandé à "+px(m,sl)+", obtenu à "+px(m,f)+" : l'écart est le slippage). "+S.exp);
+  }else if(p.tp!=null&&(long?ref>=p.tp:ref<=p.tp)){
+    exec(m,-p.q,p.tp,"Take-profit",false);say("Take-profit atteint sur "+m.name+". "+S.exp);
+  }
+}
+function checkMargin(){
+  const u=used();if(u<=0)return;
+  if(equity()/u<.5){
+    for(const k of Object.keys(S.pos)){const m=M[k],p=S.pos[k];exec(m,-p.q,p.q>0?m.bid:m.ask,"Liquidation",true)}
+    S.orders=[];S.dirty=true;
+    say("Appel de marge : ton équité est passée sous 50 % de la marge utilisée. Le courtier a fermé toutes tes positions.");
+  }
+}
+
+/* ---------- Boucle ---------- */
+let acc=0;
+setInterval(()=>{
+  acc+=S.speed*.1;let n=0;
+  if(MODE==="live"){acc=0;return}
+  while(acc>=1&&n<10){acc--;n++;if(MODE==="sim"){for(const i of INS){stepPrice(M[i.id],S.tick);processMarket(M[i.id])}}else if(!replayTick()){acc=0;break}S.tick++;checkMargin()}
+  if(n&&!$("view-simulateur").hidden)render();
+},100);
+
+/* ---------- Rendu simulateur ---------- */
+function buildWatch(){
+  $("watchlist").innerHTML=INS.map(i=>`<li><button data-id="${i.id}" aria-pressed="${i.id===S.sel}"${MODE!=="sim"&&!DATA[i.id]?" disabled":""}><span class="nm">${i.name}</span><span class="px" id="w-px-${i.id}"></span><span class="cl">${i.cls}</span><span class="ch" id="w-ch-${i.id}"></span></button></li>`).join("");
+}
+function render(){
+  const m=M[S.sel];
+  for(const i of INS){const x=M[i.id],ch=(x.mid/x.open-1)*100;$("w-px-"+i.id).textContent=px(x,x.mid);const e=$("w-ch-"+i.id);e.textContent=(ch>=0?"+":"−")+Math.abs(ch).toFixed(2).replace(".",",")+" %";e.className="ch "+(ch>=0?"up":"down")}
+  const eq=equity(),u=used(),pl=totalPnl();
+  $("a-bal").textContent=money(S.bal);$("a-eq").textContent=money(eq);
+  $("a-pnl").textContent=money(pl);$("a-pnl").className=pl>=0?"up":"down";
+  $("a-used").textContent=money(u);$("a-free").textContent=money(eq-u);
+  const lv=$("a-lvl");lv.textContent=u>0?Math.round(eq/u*100).toLocaleString("fr-FR")+" %":"—";lv.className=u>0&&eq/u<1?"down":"";
+  $("c-name").textContent=m.name;$("c-sub").textContent=m.cls+" · levier max 1:"+m.lev+" · bougies de 5 min"+(MODE==="live"?(closed(m)?" · marché fermé, dernier cours "+dfull.format(new Date(m.lastT*1000)):" · cours réel de "+dhm.format(new Date(m.lastT*1000))):MODE==="replay"?" · replay de cours réels":" · prix simulés");
+  $("c-bid").textContent=px(m,m.bid);$("c-ask").textContent=px(m,m.ask);$("c-sp").textContent=px(m,m.ask-m.bid);
+  $("t-ask").textContent=px(m,m.ask);$("t-bid").textContent=px(m,m.bid);
+  $("clock").textContent=clock(S.tick);
+  draw();estimate();tables();
+}
+function draw(){
+  const m=M[S.sel],c=$("cv"),g=c.getContext("2d"),dpr=window.devicePixelRatio||1,W=c.clientWidth,H=c.clientHeight;
+  if(!W)return;
+  if(c.width!==Math.round(W*dpr)||c.height!==Math.round(H*dpr)){c.width=Math.round(W*dpr);c.height=Math.round(H*dpr)}
+  g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+  const cs=getComputedStyle(document.documentElement),col=n=>cs.getPropertyValue(n).trim();
+  const padR=70,padB=22,padT=10,pw=W-padR,ph=H-padT-padB;
+  const n=Math.max(20,Math.min(Math.floor(pw/9),m.candles.length));
+  const data=m.candles.slice(-n).concat([m.cur]);
+  let lo=Infinity,hi=-Infinity;for(const d of data){lo=Math.min(lo,d.l);hi=Math.max(hi,d.h)}
+  const p=S.pos[m.id];if(p){lo=Math.min(lo,p.avg);hi=Math.max(hi,p.avg)}
+  const pad=(hi-lo)*.08||m.mid*.001;lo-=pad;hi+=pad;
+  const y=v=>padT+(hi-v)/(hi-lo)*ph,bw=pw/data.length;
+  g.font="11px "+(col("--mono")||"monospace");g.textBaseline="middle";
+  g.strokeStyle=col("--line");g.fillStyle=col("--muted");g.lineWidth=1;
+  for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4,yy=Math.round(y(v))+.5;g.beginPath();g.moveTo(0,yy);g.lineTo(pw,yy);g.stroke();g.textAlign="left";g.fillText(px(m,v),pw+6,Math.min(H-padB-6,Math.max(8,yy)))}
+  g.textAlign="center";g.textBaseline="alphabetic";
+  const every=Math.ceil(70/bw);
+  data.forEach((d,i)=>{if(i%every===0&&i*bw>20&&i*bw<pw-20)g.fillText(d.lab,i*bw+bw/2,H-6)});
+  const upc=col("--up"),dnc=col("--down");
+  data.forEach((d,i)=>{const x=i*bw+bw/2,cc=d.c>=d.o?upc:dnc;g.strokeStyle=cc;g.fillStyle=cc;
+    g.beginPath();g.moveTo(Math.round(x)+.5,y(d.h));g.lineTo(Math.round(x)+.5,y(d.l));g.stroke();
+    const t=y(Math.max(d.o,d.c)),b=y(Math.min(d.o,d.c));g.fillRect(x-bw*.32,t,bw*.64,Math.max(1,b-t))});
+  const line=(v,c2,label,dash)=>{if(v==null||v<lo||v>hi)return;const yy=Math.round(y(v))+.5;g.save();g.strokeStyle=c2;g.setLineDash(dash||[]);g.beginPath();g.moveTo(0,yy);g.lineTo(pw,yy);g.stroke();g.restore();g.fillStyle=c2;g.textAlign="left";g.textBaseline="bottom";g.fillText(label,4,yy-2)};
+  if(p){line(p.avg,col("--accent"),"Prix d'entrée "+px(m,p.avg));line(p.sl,dnc,"Stop-loss "+px(m,p.sl),[5,4]);line(p.tp,upc,"Take-profit "+px(m,p.tp),[5,4])}
+  for(const o of S.orders)if(o.id===m.id)line(o.px,col("--muted"),(o.type==="limit"?"Limite ":"Stop ")+(o.q>0?"achat ":"vente ")+px(m,o.px),[2,4]);
+  const yy=y(m.mid);g.fillStyle=col("--ink");g.fillRect(pw+2,yy-9,padR-4,18);g.fillStyle=col("--surface");g.textAlign="left";g.textBaseline="middle";g.fillText(px(m,m.mid),pw+6,yy);
+}
+function ticket(){
+  const m=M[S.sel],qty=parse($("t-qty").value),p=parse($("t-px").value),sl=parse($("t-sl").value),tp=parse($("t-tp").value);
+  const ref=S.type==="market"?(S.side>0?m.ask:m.bid):p;
+  return {m,qty,p,sl,tp,ref};
+}
+function estimate(){
+  const {m,qty,sl,ref}=ticket(),ok=qty>0&&ref>0;
+  $("e-ml").textContent="Marge requise (levier 1:"+m.lev+")";
+  $("e-not").textContent=ok?money(qty*ref):"—";
+  $("e-mar").textContent=ok?money(qty*ref/m.lev):"—";
+  $("e-com").textContent=ok?(m.com?money(Math.max(1,qty*ref*m.com)):"0,00 $ (payée via le spread)"):"—";
+  $("e-spc").textContent=qty>0?money(qty*(m.ask-m.bid)):"—";
+  const r=$("e-risk");
+  if(ok&&sl>0){const loss=Math.abs(ref-sl)*qty,pc=loss/equity()*100;r.textContent=money(loss)+" ("+pc.toFixed(1).replace(".",",")+" % du compte)";r.className=pc>2?"down":""}
+  else{r.textContent="pas de stop";r.className="muted"}
+  $("t-apply").hidden=!S.pos[m.id];
+}
+let sig="";
+function tables(){
+  const ks=Object.keys(S.pos);
+  const s2=JSON.stringify([ks.map(k=>[k,S.pos[k].q,S.pos[k].sl,S.pos[k].tp,S.pos[k].avg]),S.orders.map(o=>o.oid),S.journal.length&&S.journal[0].t+S.journal[0].id+S.journal.length]);
+  if(s2!==sig||S.dirty){sig=s2;S.dirty=false;
+    $("postab").innerHTML=ks.length?`<table><tr><th>Marché</th><th>Sens</th><th>Quantité</th><th>Prix d'entrée</th><th>Prix actuel</th><th>Stop-loss</th><th>Take-profit</th><th>P&amp;L latent</th><th></th></tr>`+ks.map(k=>{const m=M[k],p=S.pos[k];return `<tr><td class="t">${m.name}</td><td class="t ${p.q>0?"up":"down"}">${p.q>0?"Long (achat)":"Short (vente)"}</td><td>${qf(m,p.q)}</td><td>${px(m,p.avg)}</td><td id="pp-${k}"></td><td>${p.sl!=null?px(m,p.sl):"—"}</td><td>${p.tp!=null?px(m,p.tp):"—"}</td><td id="pl-${k}"></td><td><button class="btn" data-close="${k}">Clôturer</button></td></tr>`}).join("")+"</table>":`<p class="empty">Aucune position. Achète si tu penses que le prix va monter, vends si tu penses qu'il va baisser.</p>`;
+    $("ordtab").innerHTML=S.orders.length?`<table><tr><th>Marché</th><th>Type</th><th>Sens</th><th>Quantité</th><th>Prix</th><th></th></tr>`+S.orders.map(o=>{const m=M[o.id];return `<tr><td class="t">${m.name}</td><td class="t">${o.type==="limit"?"Limite":"Stop"}</td><td class="t ${o.q>0?"up":"down"}">${o.q>0?"Achat":"Vente"}</td><td>${qf(m,o.q)}</td><td>${px(m,o.px)}</td><td><button class="btn" data-cancel="${o.oid}">Annuler</button></td></tr>`}).join("")+"</table>":`<p class="empty">Aucun ordre en attente. Les ordres limite et stop attendent ici que le prix les atteigne.</p>`;
+    $("jtab").innerHTML=S.journal.length?`<table><tr><th>Heure</th><th>Marché</th><th>Opération</th><th>Quantité</th><th>Prix obtenu</th><th>Frais</th><th>P&amp;L réalisé</th></tr>`+S.journal.map(j=>{const m=M[j.id];return `<tr><td>${j.ts}</td><td class="t">${m.name}</td><td class="t">${j.reason} · ${j.q>0?"achat":"vente"}</td><td>${qf(m,j.q)}</td><td>${px(m,j.fill)}</td><td>${money(j.com)}</td><td class="${j.pnl==null?"muted":j.pnl>=0?"up":"down"}">${j.pnl==null?"—":money(j.pnl)}</td></tr>`}).join("")+"</table>":`<p class="empty">Chaque exécution s'inscrit ici avec le prix réellement obtenu, les frais et le résultat.</p>`;
+  }
+  for(const k of ks){const m=M[k],p=S.pos[k],a=$("pp-"+k),b=$("pl-"+k);if(!a)continue;a.textContent=px(m,p.q>0?m.bid:m.ask);const v=upnl(m,p);b.textContent=money(v);b.className=v>=0?"up":"down"}
+}
+
+/* ---------- Ticket ---------- */
+function msg(t,bad){const e=$("t-msg");e.textContent=t;e.className="msg "+(bad?"down":"up")}
+function checkProt(side,ref,sl,tp,m){
+  if(!isNaN(sl)&&(side>0?sl>=ref:sl<=ref))return "Le stop-loss doit être "+(side>0?"sous":"au-dessus du")+" le prix d'entrée ("+px(m,ref)+").".replace("sous le","sous le").replace("du le","du");
+  if(!isNaN(tp)&&(side>0?tp<=ref:tp>=ref))return "Le take-profit doit être "+(side>0?"au-dessus du":"sous le")+" prix d'entrée ("+px(m,ref)+").";
+  return null;
+}
+function send(){
+  const {m,qty,p,sl,tp,ref}=ticket();
+  if(S.type==="market"&&closed(m))return msg(CLOSEDMSG,1);
+  if(!(qty>0))return msg("Indique une quantité positive.",1);
+  const q=rq(m,qty)*S.side;if(!q)return msg("Quantité minimale : "+m.step.toLocaleString("fr-FR")+".",1);
+  if(S.type!=="market"){
+    if(!(p>0))return msg("Indique le prix de déclenchement.",1);
+    const buy=S.side>0;
+    if(S.type==="limit"&&(buy?p>=m.ask:p<=m.bid))return msg("Une limite "+(buy?"d'achat se place sous":"de vente se place au-dessus du")+" prix actuel. Sinon, utilise un ordre au marché.",1);
+    if(S.type==="stop"&&(buy?p<=m.ask:p>=m.bid))return msg("Un stop "+(buy?"d'achat se place au-dessus du":"de vente se place sous le")+" prix actuel.",1);
+  }
+  const e=checkProt(S.side,ref,sl,tp,m);if(e)return msg(e,1);
+  if(!reduces(m,q)){const need=marginAfter(m,q),eq=equity();if(need>eq)return msg("Marge insuffisante : il faudrait "+money(need)+" de marge au total, ton équité est de "+money(eq)+". Réduis la quantité.",1)}
+  const s=isNaN(sl)?null:sl,t=isNaN(tp)?null:tp;
+  if(S.type==="market"){
+    const f=exec(m,q,S.side>0?m.ask:m.bid,"Au marché",true);flag("market");
+    const np=S.pos[m.id];if(np&&Math.sign(np.q)===S.side)setProt(m,s,t);
+    msg((S.side>0?"Acheté ":"Vendu ")+qf(m,q)+" "+m.name+" à "+px(m,f)+". L'explication est sous le graphique.");say(S.exp);
+  }else{
+    S.orders.push({oid:S.oid++,id:m.id,q,type:S.type,px:p,sl:s,tp:t});S.dirty=true;if(S.type==="limit")flag("limit");if(s!=null)flag("sltp");
+    msg("Ordre "+(S.type==="limit"?"limite":"stop")+" placé à "+px(m,p)+". Il attend que le prix l'atteigne.");
+  }
+  render();
+}
+function selectIns(id){
+  S.sel=id;const m=M[id];
+  document.querySelectorAll("#watchlist button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.id===id));
+  $("t-qty").value=String(m.q0).replace(".",",");$("t-px").value="";$("t-sl").value="";$("t-tp").value="";
+  $("t-qtyl").textContent="Quantité en "+m.unit;msg("");render();
+}
+function setSide(s){S.side=s;$("t-buy").setAttribute("aria-pressed",s>0);$("t-sell").setAttribute("aria-pressed",s<0);estimate()}
+function setType(t){S.type=t;document.querySelectorAll("#otype button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));$("t-pxf").hidden=t==="market";estimate()}
+function setSpeed(s){S.speed=s;document.querySelectorAll("#speed button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.s===s))}
+
+$("watchlist").addEventListener("click",e=>{const b=e.target.closest("button");if(b)selectIns(b.dataset.id)});
+$("t-buy").onclick=()=>setSide(1);$("t-sell").onclick=()=>setSide(-1);
+$("otype").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setType(b.dataset.t)});
+$("speed").addEventListener("click",e=>{const b=e.target.closest("button");if(b)setSpeed(+b.dataset.s)});
+["t-qty","t-px","t-sl","t-tp"].forEach(i=>$(i).addEventListener("input",estimate));
+$("t-go").onclick=send;
+$("t-size").onclick=()=>{const {m,sl,ref}=ticket();if(!(sl>0)||!(ref>0)||sl===ref)return msg("Renseigne d'abord un stop-loss : la taille se calcule à partir de la distance jusqu'au stop.",1);
+  const q=Math.floor(.01*equity()/Math.abs(ref-sl)/m.step)*m.step;if(q<=0)return msg("Ton stop est trop loin pour risquer seulement 1 % avec la quantité minimale.",1);
+  $("t-qty").value=String(rq(m,q)).replace(".",",");estimate();flag("size");msg("Avec cette taille, tu perds environ 1 % du compte si le stop est touché.")};
+$("t-apply").onclick=()=>{const m=M[S.sel],p=S.pos[m.id];if(!p)return;const sl=parse($("t-sl").value),tp=parse($("t-tp").value);
+  if(isNaN(sl)&&isNaN(tp))return msg("Indique un stop-loss ou un take-profit.",1);
+  const e=checkProt(Math.sign(p.q),p.q>0?m.bid:m.ask,sl,tp,m);if(e)return msg(e.replace("prix d'entrée","prix actuel"),1);
+  setProt(m,isNaN(sl)?null:sl,isNaN(tp)?null:tp);msg("Protection mise à jour sur ta position "+m.name+".");render()};
+$("scen").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const m=M[S.sel],k=b.dataset.k;
+  if(k==="trend"){m.sd=m.sig*.25;m.sv=1;m.st=240;say("Scénario : tendance haussière sur "+m.name+" pendant environ 4 heures de marché.")}
+  if(k==="crash"){m.sd=-m.sig*.9;m.sv=3;m.st=60;say("Scénario : krach sur "+m.name+". La volatilité explose et le spread s'élargit.")}
+  if(k==="news"){flag("news");const s=Math.random()<.5?-1:1;m.mid*=Math.exp(s*m.sig*(12+8*Math.random()));m.volM=3;quote(m);say("Scénario : annonce économique. Le prix de "+m.name+" saute d'un coup, sans passer par les prix intermédiaires.")}
+  if(k==="calm"){m.st=0;m.volM=.6;m.drift=0;say("Scénario : retour au calme sur "+m.name+".")}
+});
+document.querySelector(".tables").addEventListener("click",e=>{
+  const c=e.target.closest("[data-close]"),x=e.target.closest("[data-cancel]");
+  if(c){const m=M[c.dataset.close],p=S.pos[m.id];if(p&&closed(m))say(CLOSEDMSG);else if(p){const f=exec(m,-p.q,p.q>0?m.bid:m.ask,"Clôture",true);say(S.exp);render()}}
+  if(x){S.orders=S.orders.filter(o=>o.oid!==+x.dataset.cancel);S.dirty=true;render()}
+});
+let armed=0;
+$("reset").onclick=()=>{const b=$("reset");if(!armed){armed=1;b.textContent="Confirmer la remise à zéro";setTimeout(()=>{armed=0;b.textContent="Remettre le compte à 10 000 $"},3000);return}
+  armed=0;b.textContent="Remettre le compte à 10 000 $";S.bal=10000;S.pos={};S.orders=[];S.journal=[];S.dirty=true;say("Compte remis à 10 000 $.");render()};
+window.addEventListener("resize",()=>{if(!$("view-simulateur").hidden)draw()});
+
+/* ---------- Parcours ---------- */
+const CANDLE=`<svg width="190" height="170" viewBox="0 0 190 170" role="img" aria-label="Schéma d'une bougie haussière"><line x1="50" y1="14" x2="50" y2="156" stroke="var(--up)" stroke-width="2"/><rect x="34" y="48" width="32" height="72" fill="var(--up)"/><g font-family="IBM Plex Sans,sans-serif" font-size="12" fill="var(--ink)"><text x="82" y="18">Plus haut</text><text x="82" y="52">Clôture</text><text x="82" y="124">Ouverture</text><text x="82" y="160">Plus bas</text></g><g stroke="var(--muted)" stroke-width="1"><line x1="54" y1="14" x2="78" y2="14"/><line x1="68" y1="48" x2="78" y2="48"/><line x1="68" y1="120" x2="78" y2="120"/><line x1="54" y1="156" x2="78" y2="156"/></g></svg>`;
+const LESSONS=[
+ {c:"Chapitre 1 · Les bases",t:"Un marché, c'est quoi ?",h:`<p>Un marché financier met face à face des gens qui veulent <b>acheter</b> et des gens qui veulent <b>vendre</b> la même chose : une action, une devise, une crypto ou un indice.</p><p>Le prix n'est fixé par personne. Il bouge à chaque instant selon le rapport de force : plus d'acheteurs pressés que de vendeurs, le prix monte ; l'inverse, il baisse.</p><p>Trader, c'est acheter ou vendre en pariant sur le sens du prochain mouvement. On gagne la différence si on a raison, on la perd si on a tort. Investir, c'est la même mécanique sur des années ; trader, c'est sur des minutes, des heures ou des jours.</p>`,
+  ex:"Tu achètes 10 actions à 100 $ : tu paies 1 000 $. Le prix monte à 105 $ et tu revends : tu récupères 1 050 $. Gain : 50 $. S'il était descendu à 95 $, tu aurais perdu 50 $.",
+  k:"Le prix monte quand les acheteurs sont plus pressés que les vendeurs, et baisse dans le cas inverse.",
+  q:"Pourquoi le prix d'une action monte-t-il ?",o:["Parce que l'entreprise décide d'augmenter son prix","Parce que les acheteurs sont plus pressés que les vendeurs","Parce que la bourse le fixe chaque matin"],a:1,w:"Le prix résulte de l'offre et de la demande. Une bonne nouvelle fait monter le prix seulement parce qu'elle attire des acheteurs."},
+ {t:"Ce qu'on peut trader",h:`<p><b>Une action</b> est une petite part d'une entreprise (Apple, Nvidia). Son prix suit la santé et les perspectives de l'entreprise.</p><p><b>Un indice</b> est un panier d'actions résumé en un seul chiffre : le S&amp;P 500 regroupe 500 grandes entreprises américaines, le CAC 40 regroupe 40 grandes entreprises françaises. <b>Un ETF</b> est un fonds qui copie un indice et s'achète comme une action.</p><p><b>Le forex</b> est le marché des devises. Elles se négocient par paires : EUR/USD à 1,0850 veut dire qu'1 euro vaut 1,0850 dollar. <b>Les cryptos</b> (Bitcoin, Ethereum) s'échangent 24 h/24 et bougent beaucoup plus fort que le reste.</p><p><b>Un CFD</b> est un contrat avec ton courtier qui copie le prix d'un actif sans que tu le possèdes. Il permet d'utiliser le levier et de parier à la baisse, ce qui le rend plus risqué.</p>`,
+  ex:"En une journée normale, EUR/USD bouge d'environ 0,5 %, une grande action de 1 à 2 %, le Bitcoin de 3 % ou plus. Plus un marché bouge, plus il peut rapporter vite et faire perdre vite.",
+  k:"Action, indice, devise, crypto : la mécanique d'achat et de vente est la même, seule l'amplitude des mouvements change.",
+  q:"EUR/USD passe de 1,08 à 1,10. Que s'est-il passé ?",o:["Le dollar s'est renforcé face à l'euro","L'euro s'est renforcé face au dollar","Les deux devises ont monté"],a:1,w:"Il faut maintenant plus de dollars pour acheter 1 euro : l'euro vaut plus cher."},
+ {t:"Le courtier et ton compte",h:`<p>Tu ne peux pas aller seul sur le marché. Il te faut un <b>courtier</b> (broker) : c'est l'intermédiaire qui transmet tes ordres et te fournit la plateforme avec les graphiques.</p><p>Deux chiffres décrivent ton compte. Le <b>solde</b> est l'argent déposé, plus ou moins les trades déjà terminés. L'<b>équité</b> est le solde plus le gain ou la perte de tes positions encore ouvertes : c'est ce que vaudrait ton compte si tu fermais tout maintenant.</p><p>Chaque marché a ses horaires : les actions américaines de 15 h 30 à 22 h (heure de Paris), le forex 24 h/24 du lundi au vendredi, les cryptos sans interruption.</p><p>Un <b>compte démo</b> fonctionne avec de l'argent fictif, comme ce simulateur. En réel, choisis toujours un courtier régulé (en France, vérifie les listes de l'AMF).</p>`,
+  ex:"Solde : 10 000 $. Tu as une position ouverte qui gagne 150 $ pour l'instant. Ton équité est de 10 150 $. Le gain ne rejoint le solde que lorsque tu clôtures.",
+  k:"Le solde, c'est le passé (trades terminés). L'équité, c'est la valeur du compte à l'instant présent.",
+  q:"Solde de 10 000 $, une position ouverte qui perd 300 $. Ton équité est de :",o:["10 000 $","10 300 $","9 700 $"],a:2,w:"Équité = solde + P&L latent = 10 000 − 300."},
+ {t:"Bid, ask et spread",h:`<p>Il n'y a jamais un seul prix, mais deux. Le <b>bid</b> est le prix auquel tu peux vendre tout de suite. L'<b>ask</b> est le prix auquel tu peux acheter tout de suite. L'ask est toujours un peu plus haut.</p><p>L'écart entre les deux s'appelle le <b>spread</b>. C'est le premier coût du trading : si tu achètes à l'ask et revends immédiatement au bid, tu perds le spread.</p><p>Le spread est petit sur les marchés très échangés (EUR/USD) et s'élargit quand le marché s'agite ou que peu de monde échange.</p>`,
+  ex:"Apple cote 229,98 / 230,02. Tu achètes 10 actions à 230,02. Si tu revendais dans la seconde, ce serait à 229,98 : tu perdrais 0,04 $ × 10 = 0,40 $.",
+  k:"Tu achètes toujours au prix le plus haut (ask) et tu vends au plus bas (bid). Chaque trade démarre légèrement en négatif.",
+  q:"EUR/USD cote 1,08500 / 1,08510. Tu achètes puis revends aussitôt. Résultat ?",o:["Tu ne gagnes ni ne perds rien","Tu perds 0,00010 par unité, le spread","Tu gagnes 0,00010 par unité"],a:1,w:"Tu achètes à l'ask (1,08510) et tu vends au bid (1,08500).",
+  m:"market",mt:"Achète au marché dans le simulateur et regarde ton P&L latent : il démarre en négatif. C'est le spread."},
+ {c:"Chapitre 2 · Lire le marché et agir",t:"Lire une bougie",h:`<div class="fig">${CANDLE}<p style="flex:1;min-width:200px">Chaque bougie résume une période (ici 5 minutes) avec quatre prix : l'<b>ouverture</b>, la <b>clôture</b>, le <b>plus haut</b> et le <b>plus bas</b>.</p></div><p>Le corps épais relie l'ouverture à la clôture. Bougie verte : le prix a fini plus haut qu'il n'a commencé. Bougie rouge : il a fini plus bas. Les traits fins, les mèches, montrent jusqu'où le prix est allé avant de revenir.</p><p>La période s'appelle l'<b>unité de temps</b>. Le même marché peut se lire en bougies de 1 minute, 1 heure ou 1 jour : plus l'unité est courte, plus il y a de bruit.</p>`,
+  ex:"Bougie de 5 minutes : ouverture 230,00, plus haut 230,80, plus bas 229,70, clôture 230,50. Elle est verte (clôture au-dessus de l'ouverture), avec une mèche haute de 0,30 et une mèche basse de 0,30.",
+  k:"Verte : le prix a monté pendant la période. Rouge : il a baissé. Les mèches montrent les tentatives qui ont échoué.",
+  q:"Une bougie rouge avec une longue mèche basse signifie :",o:["Le prix a fini plus bas qu'à l'ouverture, mais il est remonté depuis son plus bas","Le prix n'a fait que baisser sans s'arrêter","Le marché était fermé"],a:0,w:"Rouge : clôture sous l'ouverture. La mèche basse montre que des acheteurs ont fait remonter le prix depuis son plus bas."},
+ {t:"Tendance, support et résistance",h:`<p>Une <b>tendance haussière</b> se reconnaît à des sommets et des creux de plus en plus hauts. Une <b>tendance baissière</b>, c'est l'inverse. Quand le prix oscille entre deux bornes sans direction, on parle de <b>range</b>.</p><p>Un <b>support</b> est une zone de prix où le marché a déjà rebondi plusieurs fois : des acheteurs y attendent. Une <b>résistance</b> est une zone où il a déjà buté : des vendeurs y attendent.</p><p>Ces zones ne sont pas des murs. Quand le prix les traverse, on parle de <b>cassure</b>, et le mouvement s'accélère souvent. Pour débuter, la règle la plus simple est de trader dans le sens de la tendance, pas contre elle.</p>`,
+  ex:"Apple a rebondi trois fois autour de 228 $ cette semaine : 228 est un support. Un acheteur peut entrer près de 228 et placer son stop juste en dessous, à 227 : si le support casse, son idée était fausse et il sort avec une petite perte.",
+  k:"Regarde d'abord la direction générale. Les supports et résistances t'indiquent où entrer et où placer ton stop.",
+  q:"Le prix enchaîne des creux de plus en plus hauts et des sommets de plus en plus hauts. C'est :",o:["Une tendance haussière","Un range","Une tendance baissière"],a:0,w:"Chaque repli s'arrête plus haut que le précédent : les acheteurs gardent la main."},
+ {t:"Les trois types d'ordres",h:`<p><b>Ordre au marché</b> : tu achètes ou vends tout de suite, au meilleur prix disponible. Tu es sûr d'être exécuté, pas du prix exact.</p><p><b>Ordre limite</b> : tu fixes ton prix. « J'achète seulement si ça descend à 228. » Tu es sûr du prix, pas d'être exécuté.</p><p><b>Ordre stop</b> : il se déclenche quand le prix franchit un niveau. Il sert à couper une perte, ou à entrer quand une résistance casse. Une fois déclenché, il devient un ordre au marché.</p>`,
+  ex:"Apple cote 230. Limite d'achat à 228 : exécutée seulement si le prix descend à 228. Stop d'achat à 232 : exécuté seulement si le prix monte à 232. Limite sous le prix, stop au-dessus (pour un achat).",
+  k:"Marché = tout de suite. Limite = à mon prix ou mieux. Stop = seulement si le prix franchit ce niveau.",
+  q:"Apple cote 230. Tu veux acheter seulement si le prix redescend à 225. Quel ordre ?",o:["Un ordre au marché","Un ordre stop d'achat à 225","Un ordre limite d'achat à 225"],a:2,w:"La limite d'achat se place sous le prix actuel et attend. Un stop d'achat se place au-dessus du prix actuel.",
+  m:"limit",mt:"Place un ordre limite d'achat un peu sous le prix actuel et regarde-le attendre dans « Ordres en attente »."},
+ {t:"Long et short",h:`<p>Être <b>long</b>, c'est acheter d'abord pour revendre plus cher. Tu gagnes si le prix monte.</p><p>Être <b>short</b> (vendre à découvert), c'est vendre d'abord quelque chose que tu n'as pas, prêté par le courtier, pour le racheter moins cher ensuite. Tu gagnes si le prix baisse.</p><p>Le short a un piège : un prix ne peut pas descendre sous zéro, mais il peut monter sans limite. La perte possible d'un short n'a donc pas de plafond.</p>`,
+  ex:"Tu vends à découvert 10 actions à 100 $. Le prix tombe à 92 $, tu rachètes : gain de 8 $ × 10 = 80 $. S'il était monté à 108 $, tu aurais perdu 80 $.",
+  k:"Long : tu gagnes quand ça monte. Short : tu gagnes quand ça baisse.",
+  q:"Tu vends à découvert 10 actions à 100 $, tu les rachètes à 90 $. Résultat hors frais ?",o:["+100 $","−100 $","0 $"],a:0,w:"Tu as vendu à 100 et racheté à 90 : 10 $ de gain par action, fois 10 actions.",
+  m:"short",mt:"Ouvre une position short : clique sur Vendre sans avoir de position, puis observe ton P&L quand le prix baisse."},
+ {t:"Calculer un gain ou une perte",h:`<p>Le résultat d'un trade s'appelle le <b>P&amp;L</b> (profit and loss). Pour un achat : <b>(prix de sortie − prix d'entrée) × quantité</b>. Pour un short, c'est l'inverse : (prix d'entrée − prix de sortie) × quantité.</p><p>Tant que la position est ouverte, le P&amp;L est <b>latent</b> : il bouge avec le prix. Il devient <b>réalisé</b> quand tu clôtures, et rejoint alors ton solde.</p><p>Sur le forex, on compte en <b>pips</b> : 1 pip = 0,0001 sur la plupart des paires. La quantité se compte en <b>lots</b> : 1 lot = 100 000 unités. Sur EUR/USD, 1 pip vaut 10 $ pour 1 lot, et 1 $ pour 10 000 unités.</p>`,
+  ex:"Tu achètes 20 actions Nvidia à 140 $ et tu revends à 143,50 $. P&L = (143,50 − 140) × 20 = 70 $. Avec 0,1 % de commission à l'achat (2,80 $) et à la vente (2,87 $), il te reste 64,33 $.",
+  k:"P&L = différence de prix × quantité. Il n'est réel qu'une fois la position clôturée.",
+  q:"Tu achètes 10 000 EUR/USD à 1,0850 et tu revends à 1,0880. Gain ?",o:["3 $","30 $","300 $"],a:1,w:"1,0880 − 1,0850 = 0,0030, soit 30 pips. Sur 10 000 unités, 1 pip vaut 1 $ : 30 $.",
+  m:"close",mt:"Ouvre une position, clôture-la, puis refais le calcul à la main avec les prix du journal."},
+ {c:"Chapitre 3 · Gérer le risque",t:"Levier et marge",h:`<p>Le <b>levier</b> te permet de contrôler une position plus grande que ton argent. Avec un levier 1:30, 1 000 $ suffisent pour contrôler 30 000 $ d'EUR/USD. La somme bloquée s'appelle la <b>marge</b>.</p><p>Le levier multiplie les gains et les pertes de la même façon. À 1:30, un mouvement de 1 % contre toi te coûte 30 % de ta marge.</p><p>La <b>marge libre</b> est ce qu'il te reste pour ouvrir d'autres positions. Le <b>niveau de marge</b> est ton équité divisée par la marge utilisée. S'il tombe trop bas, le courtier ferme tes positions de force : c'est l'<b>appel de marge</b>. Ici, il tombe sous 50 %.</p>`,
+  ex:"Compte de 10 000 $. Tu achètes 100 000 EUR/USD (1 lot, environ 108 500 $) avec un levier 1:30 : marge bloquée 3 617 $. Chaque pip vaut 10 $. Une baisse de 100 pips, soit moins de 1 %, te coûte 1 000 $ : 10 % de ton compte.",
+  k:"Le levier ne change pas tes chances d'avoir raison. Il change seulement la vitesse à laquelle tu gagnes ou tu perds.",
+  q:"Avec un levier 1:20, tu ouvres une position de 20 000 $. Le marché baisse de 2 %. Tu perds :",o:["20 $","400 $","2 000 $"],a:1,w:"La perte se calcule sur la taille totale de la position : 2 % de 20 000 $ = 400 $, soit 40 % des 1 000 $ de marge.",
+  m:"lev",mt:"Ouvre des positions dont la valeur totale dépasse ton équité, et surveille le niveau de marge."},
+ {t:"Stop-loss et take-profit",h:`<p>Le <b>stop-loss</b> ferme ta position automatiquement si le prix atteint la perte maximale que tu acceptes. Le <b>take-profit</b> fait pareil pour encaisser un gain. Les deux travaillent même quand tu ne regardes pas l'écran.</p><p>Pour un achat, le stop se place <b>sous</b> le prix d'entrée et l'objectif au-dessus. Pour un short, c'est l'inverse.</p><p>Un bon stop se place là où ton idée devient fausse : juste sous un support pour un achat, par exemple. Trop près, le bruit normal du marché te sort pour rien. Trop loin, la perte devient trop grosse. Et on ne recule jamais un stop pour « laisser une chance » au trade.</p>`,
+  ex:"Tu achètes Apple à 230 $ avec un support à 228. Stop-loss à 227,50 (sous le support), take-profit à 235. Tu risques 2,50 $ par action pour en viser 5.",
+  k:"Décide de ta sortie avant d'entrer. Un trade sans stop-loss, c'est une perte sans limite.",
+  q:"Tu es long à 100 $. Où se place ton stop-loss ?",o:["À 103 $, au-dessus du prix","À 97 $, sous le prix","Exactement à 100 $"],a:1,w:"Pour un achat, la perte arrive quand le prix baisse : le stop se place sous le prix d'entrée.",
+  m:"sltp",mt:"Ouvre une position avec un stop-loss et un take-profit, et repère les deux lignes en pointillés sur le graphique."},
+ {t:"La taille de position",h:`<p>La question qui protège ton compte n'est pas « est-ce que je vais gagner ? » mais « combien je perds si j'ai tort ? ».</p><p>La règle la plus utile pour débuter : ne risque jamais plus de <b>1 % de ton compte</b> sur un trade. Avec 10 000 $, la perte maximale par trade est de 100 $. À ce rythme, dix pertes de suite te coûtent moins de 10 % du compte : tu peux te tromper et continuer.</p><p>La taille se calcule à l'envers. Tu choisis d'abord où mettre le stop, puis : <b>quantité = risque accepté ÷ distance jusqu'au stop</b>.</p>`,
+  ex:"Compte de 10 000 $, risque de 1 % = 100 $. Tu achètes à 230 $ avec un stop à 228 $ : distance 2 $. Quantité = 100 ÷ 2 = 50 actions. Si le stop est touché, tu perds 100 $, pas plus (hors slippage).",
+  k:"C'est le stop qui décide de la taille, jamais l'envie de gagner gros.",
+  q:"Compte de 5 000 $, risque de 1 %, stop placé à 0,50 $ du prix d'entrée. Combien d'actions ?",o:["10","100","500"],a:1,w:"1 % de 5 000 $ = 50 $ de risque. 50 ÷ 0,50 = 100 actions.",
+  m:"size",mt:"Saisis un stop-loss dans le ticket, puis clique sur « Calculer la taille pour risquer 1 % »."},
+ {t:"Le ratio risque / rendement",h:`<p>Le <b>ratio risque/rendement</b> compare ce que tu risques à ce que tu vises. Risquer 100 $ pour en viser 200, c'est un ratio de 1:2.</p><p>Ce ratio change tout. Avec du 1:2, tu peux avoir tort deux fois sur trois et rester à l'équilibre : un gain de 200 $ compense deux pertes de 100 $.</p><p>Le taux de réussite seul ne veut donc rien dire. Gagner 8 fois sur 10 ne sert à rien si chaque gain est de 20 $ et chaque perte de 100 $.</p>`,
+  ex:"10 trades avec un ratio 1:2, risque de 100 $ chacun. Tu en gagnes 4 et en perds 6 : 4 × 200 − 6 × 100 = +200 $. Tu as eu tort plus souvent que raison, et tu es gagnant.",
+  k:"Ne prends un trade que si le gain visé vaut au moins deux fois la perte acceptée.",
+  q:"Tu risques 50 $ pour viser 150 $. Sur 10 trades, tu en gagnes 4. Résultat hors frais ?",o:["−100 $","0 $","+300 $"],a:2,w:"4 gains × 150 $ = 600 $. 6 pertes × 50 $ = 300 $. Résultat : +300 $."},
+ {t:"Frais et slippage",h:`<p>Plusieurs coûts grignotent chaque trade. Le <b>spread</b>, que tu connais. La <b>commission</b>, un pourcentage prélevé par le courtier sur les actions et les cryptos. Le <b>swap</b>, un intérêt facturé quand tu gardes une position à levier pendant la nuit. Et le <b>slippage</b>.</p><p>Le slippage, c'est l'écart entre le prix que tu vois et le prix que tu obtiens. Il apparaît sur les ordres au marché et les stops quand le prix bouge vite.</p><p>Lors d'une annonce, le prix peut sauter d'un niveau à un autre sans passer entre les deux : c'est un <b>gap</b>. Ton stop-loss à 228 peut alors être exécuté à 226. Un stop limite la perte, il ne la garantit pas.</p>`,
+  ex:"100 allers-retours dans le mois sur 2 000 $ d'actions, à 0,1 % de commission par ordre : 2 $ à l'achat + 2 $ à la vente = 4 $ par trade, soit 400 $ de frais. Il faut gagner 400 $ rien que pour être à zéro.",
+  k:"Plus tu trades souvent, plus les frais comptent. Un stop limite la perte sans la garantir.",
+  q:"Ton stop-loss est à 228. Une annonce fait passer le prix de 229 à 226 d'un coup. Tu sors à :",o:["228, le prix du stop","Environ 226, le premier prix disponible","229, le dernier prix avant l'annonce"],a:1,w:"Le stop devient un ordre au marché quand il est déclenché : il prend le premier prix disponible, ici autour de 226.",
+  m:"news",mt:"Ouvre une position avec un stop-loss, puis lance le scénario « Annonce » et compare le prix du stop au prix obtenu dans le journal."},
+ {c:"Chapitre 4 · Tenir dans la durée",t:"Pourquoi les prix bougent",h:`<p>Les prix réagissent aux informations : résultats d'une entreprise, décisions de taux des banques centrales (Fed aux États-Unis, BCE en Europe), chiffres de l'emploi et de l'inflation, événements politiques. Ces rendez-vous sont listés à l'avance dans un <b>calendrier économique</b>.</p><p>Le marché n'attend pas la nouvelle pour bouger : le prix contient déjà ce que tout le monde attend. Ce qui fait bouger le prix, c'est la <b>surprise</b>, l'écart entre le chiffre publié et le chiffre attendu.</p><p>Deux façons d'analyser. L'<b>analyse fondamentale</b> étudie la valeur réelle (bénéfices, économie). L'<b>analyse technique</b> étudie le graphique (tendances, supports). Beaucoup de traders utilisent la première pour choisir quoi trader et la seconde pour choisir quand.</p>`,
+  ex:"Le marché attend un bénéfice de 2,00 $ par action. L'entreprise annonce 1,90 $ : c'est un bon bénéfice, en hausse sur un an, mais inférieur aux attentes. L'action baisse à l'ouverture.",
+  k:"Ce n'est pas la nouvelle qui compte, c'est la différence avec ce que le marché attendait.",
+  q:"Une entreprise publie de bons résultats, mais moins bons que prévu par le marché. Le plus probable :",o:["L'action monte, les résultats sont bons","L'action baisse, le marché est déçu","Le prix ne bouge pas"],a:1,w:"Le prix intégrait déjà des résultats encore meilleurs. La déception fait vendre."},
+ {t:"Psychologie et plan de trading",h:`<p>La plupart des pertes des débutants ne viennent pas d'un manque de connaissances, mais des émotions. La <b>peur</b> fait couper un trade gagnant trop tôt. L'<b>avidité</b> fait grossir les positions. L'envie de « se refaire » après une perte pousse à trader n'importe quoi.</p><p>La parade est un <b>plan de trading</b> écrit avant d'ouvrir la plateforme : quel marché, quel signal pour entrer, où est le stop, où est l'objectif, quelle taille, et combien de pertes maximum dans la journée avant d'arrêter.</p><p>Tiens un <b>journal</b> : pour chaque trade, la raison de l'entrée, le résultat et ce que tu ressentais. Au bout de 30 trades, tu verras tes erreurs se répéter, et tu sauras quoi corriger.</p>`,
+  ex:"Règle personnelle : « Après deux pertes dans la journée, j'arrête jusqu'à demain. » Avec 1 % de risque par trade, la pire journée coûte 2 % du compte.",
+  k:"Écris tes règles quand tu es calme, puis applique-les quand tu ne l'es plus.",
+  q:"Tu viens de perdre deux trades de suite. La bonne réaction ?",o:["Doubler la taille pour récupérer vite","Enlever le stop sur le prochain trade","Garder la même taille, ou arrêter pour la journée"],a:2,w:"Augmenter le risque après une perte est le moyen le plus rapide de vider un compte."},
+ {t:"Les pièges du débutant",h:`<p>Il faut le savoir avant de commencer : la majorité des particuliers perdent de l'argent en trading. Les courtiers européens doivent l'afficher, et le chiffre tourne le plus souvent entre 70 et 80 % des comptes sur les produits à levier.</p><p>Les erreurs classiques : trop de levier, pas de stop-loss, racheter une position perdante pour « baisser son prix moyen », trader par ennui, passer au réel trop tôt.</p><p>Les arnaques sont partout : gains garantis, signaux payants, « formateurs » qui vendent du rêve, courtiers non régulés (l'AMF publie une liste noire). Aucun rendement n'est garanti sur un marché.</p><p>N'engage que de l'argent que tu peux te permettre de perdre, et reste en simulation jusqu'à être régulier pendant plusieurs mois.</p>`,
+  ex:"Avant de passer au réel : au moins 50 trades en simulation, tous avec un stop-loss, jamais plus de 1 % de risque, et un compte qui n'a jamais perdu plus de 10 % depuis son plus haut.",
+  k:"Ton premier objectif n'est pas de gagner, c'est de ne pas perdre ton capital pendant que tu apprends.",
+  q:"Quelqu'un te propose un placement à « 10 % par mois garantis ». C'est :",o:["Une bonne affaire si tu investis tôt","Une arnaque : aucun rendement n'est garanti","Normal pour le trading de cryptos"],a:1,w:"Un rendement élevé et garanti n'existe pas. C'est le signe le plus fiable d'une arnaque."}
+];
+const GLOSS=[["Action","Part de propriété d'une entreprise cotée en bourse."],["Analyse fondamentale","Étude de la valeur réelle d'un actif : bénéfices, économie, taux."],["Analyse technique","Étude du graphique : tendances, supports, résistances."],["Appel de marge","Fermeture forcée de tes positions par le courtier quand ton équité ne couvre plus assez la marge."],["Ask","Prix auquel tu peux acheter tout de suite. Toujours au-dessus du bid."],["Bid","Prix auquel tu peux vendre tout de suite."],["Bougie","Dessin qui résume une période avec quatre prix : ouverture, plus haut, plus bas, clôture."],["Cassure","Moment où le prix traverse un support ou une résistance."],["CFD","Contrat avec le courtier qui copie le prix d'un actif sans le posséder. Permet le levier et le short."],["Commission","Frais prélevés par le courtier sur chaque ordre exécuté."],["Compte démo","Compte d'entraînement avec de l'argent fictif."],["Courtier (broker)","Intermédiaire qui transmet tes ordres au marché et fournit la plateforme."],["Drawdown","Baisse du compte depuis son plus haut. Un compte passé de 10 000 à 9 000 $ a un drawdown de 10 %."],["Équité","Solde + gains ou pertes des positions ouvertes. La valeur du compte à l'instant présent."],["ETF","Fonds coté qui copie un indice et s'achète comme une action."],["Forex","Marché des devises, négociées par paires comme EUR/USD."],["Gap","Saut de prix d'un niveau à un autre sans passer par les prix intermédiaires."],["Indice","Panier d'actions résumé en un chiffre (S&P 500, CAC 40)."],["Journal de trading","Registre de tous tes trades avec la raison, le résultat et tes erreurs."],["Levier","Possibilité de contrôler une position plus grande que ton argent. 1:30 = 30 fois ta marge."],["Liquidité","Facilité à acheter ou vendre sans faire bouger le prix. Plus de liquidité = spread plus petit."],["Long","Position acheteuse : tu gagnes si le prix monte."],["Lot","Unité de taille sur le forex. 1 lot = 100 000 unités de la devise."],["Marge","Somme bloquée par le courtier pour garantir une position à levier."],["Marge libre","Équité − marge utilisée. Ce qu'il te reste pour ouvrir d'autres positions."],["Niveau de marge","Équité ÷ marge utilisée, en %. Plus il est bas, plus l'appel de marge est proche."],["Ordre au marché","Ordre exécuté tout de suite au meilleur prix disponible."],["Ordre limite","Ordre exécuté seulement à ton prix ou mieux."],["Ordre stop","Ordre qui se déclenche quand le prix franchit un niveau, puis s'exécute au marché."],["P&L latent","Gain ou perte d'une position encore ouverte. Il bouge avec le prix."],["P&L réalisé","Gain ou perte définitif d'une position clôturée."],["Pip","Plus petite variation usuelle sur le forex : 0,0001 sur la plupart des paires."],["Position","Un trade en cours : ce que tu as acheté ou vendu et pas encore clôturé."],["Range","Marché sans tendance, qui oscille entre un support et une résistance."],["Ratio risque/rendement","Perte acceptée comparée au gain visé. 1:2 = risquer 1 pour viser 2."],["Résistance","Zone de prix où le marché a déjà buté à la hausse."],["Short","Position vendeuse (vente à découvert) : tu gagnes si le prix baisse."],["Slippage","Écart entre le prix demandé et le prix réellement obtenu."],["Solde","Argent du compte, sans compter les positions ouvertes."],["Spread","Écart entre l'ask et le bid. Le premier coût de chaque trade."],["Stop-loss","Ordre qui ferme la position à ta perte maximale acceptée."],["Support","Zone de prix où le marché a déjà rebondi."],["Swap","Intérêt facturé (ou versé) pour une position à levier gardée pendant la nuit."],["Take-profit","Ordre qui ferme la position quand ton objectif de gain est atteint."],["Tendance","Direction générale du prix : haussière, baissière ou neutre."],["Unité de temps","Durée représentée par une bougie : 1 minute, 5 minutes, 1 heure, 1 jour."],["Volatilité","Ampleur des mouvements de prix. Forte volatilité = gros mouvements dans les deux sens."]];
+let cur=store.get("tpp-cur",0);if(!(cur>=0&&cur<LESSONS.length))cur=0;
+let answered=null;
+function renderCourse(){
+  const n=LESSONS.filter((l,i)=>done[i]).length;
+  $("prog").style.width=(n/LESSONS.length*100)+"%";
+  $("progtxt").textContent=n+" leçon"+(n>1?"s":"")+" validée"+(n>1?"s":"")+" sur "+LESSONS.length;
+  $("steplist").innerHTML=LESSONS.map((l,i)=>`${l.c?`<li class="chap">${l.c}</li>`:""}<li><button data-i="${i}" aria-current="${i===cur}"><span class="n">${String(i+1).padStart(2,"0")}</span><span>${l.t}</span>${done[i]?'<span class="ok" aria-label="validée">✓</span>':""}</button></li>`).join("");
+  const l=LESSONS[cur];
+  $("lesson").innerHTML=`<div><div class="eyebrow">Étape ${cur+1} sur ${LESSONS.length}</div><h2>${l.t}</h2></div>
+   <div class="body">${l.h}</div>
+   <div class="box"><h3>Exemple chiffré</h3><p>${l.ex}</p></div>
+   <p class="key"><b>À retenir.</b> ${l.k}</p>
+   <div class="box"><h3>Vérifie que tu as compris</h3><p><b>${l.q}</b></p><div class="opts">${l.o.map((o,i)=>`<button data-o="${i}" class="${answered===null?"":i===l.a&&(answered===l.a||done[cur])?"good":i===answered?"bad":""}">${o}</button>`).join("")}</div>
+   ${answered!==null?`<p class="${answered===l.a?"up":"down"}">${answered===l.a?"Bonne réponse. ":"Pas tout à fait, réessaie. "}${answered===l.a?l.w:""}</p>`:done[cur]?`<p class="up">Leçon déjà validée. ${l.w}</p>`:""}</div>
+   ${l.m?`<div class="box"><div class="row"><h3>Mission dans le simulateur</h3><span class="badge ${flags[l.m]?"done":""}">${flags[l.m]?"Réussie":"À faire"}</span></div><p>${l.mt}</p><div><button class="btn" data-go="sim">Ouvrir le simulateur</button></div></div>`:""}
+   <div class="row">${cur>0?`<button class="btn" data-nav="-1">Étape précédente</button>`:""}${cur<LESSONS.length-1?`<button class="btn primary" data-nav="1">Étape suivante</button>`:`<button class="btn primary" data-go="sim">S'entraîner dans le simulateur</button>`}</div>`;
+}
+$("steplist").addEventListener("click",e=>{const b=e.target.closest("button");if(b){cur=+b.dataset.i;answered=null;store.set("tpp-cur",cur);renderCourse()}});
+$("lesson").addEventListener("click",e=>{
+  const o=e.target.closest("[data-o]"),n=e.target.closest("[data-nav]"),g=e.target.closest("[data-go]");
+  if(o){answered=+o.dataset.o;if(answered===LESSONS[cur].a){done[cur]=1;store.set("tpp-done",done)}renderCourse()}
+  if(n){cur+=+n.dataset.nav;answered=null;store.set("tpp-cur",cur);renderCourse();$("lesson").scrollIntoView({block:"start"})}
+  if(g)show("simulateur",true);
+});
+
+/* ---------- Vues ---------- */
+function show(v,push){
+  if(v!=="simulateur"&&v!=="lexique")v="parcours";
+  ["parcours","simulateur","lexique"].forEach(k=>$("view-"+k).hidden=k!==v);
+  document.querySelectorAll("nav.views button").forEach(b=>b.setAttribute("aria-selected",b.dataset.view===v));
+  if(push){try{location.hash=v}catch(e){}}
+  if(v==="simulateur"){render();window.scrollTo(0,0)}
+}
+document.querySelector("nav.views").addEventListener("click",e=>{const b=e.target.closest("button");if(b)show(b.dataset.view,true)});
+window.addEventListener("hashchange",()=>show(location.hash.slice(1)));
+
+function renderGuide(){const st=[["market","Achète au marché"],["sltp","Ajoute un stop-loss"],["close","Clôture la position"],["limit","Place un ordre limite"],["short","Essaie un short"]],n=st.filter(s=>flags[s[0]]).length;
+  $("guide").innerHTML=`<h3>Tes premiers pas · ${n} sur ${st.length}</h3><ol>${st.map(s=>`<li class="${flags[s[0]]?"ok":""}">${flags[s[0]]?"✓":"○"} ${s[1]}</li>`).join("")}</ol>`}
+function renderGloss(){const q=$("gq").value.trim().toLowerCase(),r=GLOSS.filter(g=>!q||(g[0]+" "+g[1]).toLowerCase().includes(q));
+  $("glist").innerHTML=r.length?r.map(g=>`<div><dt>${g[0]}</dt><dd>${g[1]}</dd></div>`).join(""):`<p class="muted">Aucun mot trouvé. Essaie un autre terme.</p>`}
+$("gq").addEventListener("input",renderGloss);
+INS.forEach(initMarket);buildWatch();renderGuide();renderGloss();setSpeed(1);selectIns("AAPL");renderCourse();show(location.hash.slice(1));
+
+/* ---------- Cours réels (API OptionLab) ---------- */
+const NOTES={live:"Cours réels Yahoo Finance, mis à jour chaque minute et parfois retardés de 15 minutes. Le spread est modélisé. Les actions américaines cotent de 15 h 30 à 22 h (heure de Paris), le forex du lundi au vendredi, les cryptos en continu.",
+  replay:"Tu rejoues les vraies cotations des 5 derniers jours, minute par minute. Le futur t'est caché, comme en vrai. Règle la vitesse pour avancer plus vite.",
+  sim:"Prix générés par un modèle. Pratique pour tester les scénarios (annonce, krach) à la demande."};
+const TAGS={live:"Cours réels · argent fictif",replay:"Replay de cours réels · argent fictif",sim:"Prix simulés · argent fictif"};
+let marm=null;
+function setMode(mode,force){
+  if(mode===MODE||(mode!=="sim"&&!HAVE))return;
+  if(!force&&(Object.keys(S.pos).length||S.orders.length)&&marm!==mode){marm=mode;$("modenote").textContent="Changer de source ferme tes positions et remet le compte à 10 000 $. Clique une deuxième fois pour confirmer.";return}
+  marm=null;MODE=mode;S.bal=10000;S.pos={};S.orders=[];S.journal=[];S.dirty=true;
+  if(mode!=="sim"&&!DATA[S.sel])S.sel=INS.find(i=>DATA[i.id]).id;
+  if(mode==="replay"){const d=DATA[S.sel];T0=d.t[Math.max(0,Math.min(d.t.length-2,400))]}
+  S.now=mode==="live"?Date.now()/1000:T0;
+  INS.forEach(i=>resetMarket(M[i.id]));
+  document.querySelectorAll("#mode button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===mode));
+  $("speedbox").hidden=mode==="live";$("scenbox").hidden=mode!=="sim";
+  $("srctag").textContent=TAGS[mode];$("modenote").textContent=NOTES[mode];
+  buildWatch();setSpeed(1);selectIns(S.sel);
+  say(mode==="live"?"Tu trades maintenant sur les cours réels.":mode==="replay"?"Replay lancé : les prix qui défilent sont de vraies cotations passées.":"Retour aux prix simulés.");
+}
+$("mode").addEventListener("click",e=>{const b=e.target.closest("button");if(b&&!b.disabled)setMode(b.dataset.m)});
+async function getBars(id,since){
+  const r=await fetch("/api/trading/candles/"+encodeURIComponent(YT[id])+"?interval=1m"+(since?"&since="+since:""));
+  if(!r.ok)throw new Error("indisponible");return r.json();
+}
+async function loadAll(){
+  const ok=await Promise.all(INS.map(async i=>{try{const d=await getBars(i.id);if(!d.t||d.t.length<60)return false;DATA[i.id]=d;return true}catch(e){return false}}));
+  return ok.some(Boolean);
+}
+async function poll(){
+  if(MODE!=="live")return;
+  await Promise.all(INS.map(async i=>{const d=DATA[i.id],m=M[i.id];if(!d)return;
+    try{const n=await getBars(i.id,d.t[d.t.length-1]);if(MODE!=="live")return;
+      for(let k=0;k<n.t.length;k++){const last=d.t.length-1;
+        if(n.t[k]===d.t[last]){for(const f of ["o","h","l","c"])d[f][last]=n[f][k];feed(m,last,true)}
+        else if(n.t[k]>d.t[last]){for(const f of ["t","o","h","l","c"])d[f].push(n[f][k]);feed(m,d.t.length-1);m.ri=d.t.length}}
+    }catch(e){}}));
+  if(MODE!=="live")return;
+  S.now=Date.now()/1000;checkMargin();if(!$("view-simulateur").hidden)render();
+}
+setInterval(poll,60000);
+loadAll().then(ok=>{
+  HAVE=ok;
+  if(!ok){$("modenote").textContent="Les cours réels ne sont pas joignables depuis cette page. "+NOTES.sim;return}
+  document.querySelectorAll("#mode button").forEach(b=>b.disabled=false);
+  if(!S.journal.length&&!S.orders.length)setMode("live",true);else $("modenote").textContent="Les cours réels sont disponibles : choisis « Cours réels » ou « Replay réel ».";
+});
+</script>
+</body>
+</html>

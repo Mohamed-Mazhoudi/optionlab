@@ -14,6 +14,7 @@ from optionlab import (Leg, Market, Strategy, PRESETS, build_preset, bs_price, b
                        implied_vol, binomial_price, monte_carlo_price)
 from optionlab.hedging import run_hedging
 from optionlab.marketdata import fetch_market
+from optionlab.intraday import fetch_candles
 
 from .db import Database
 from .routes_portfolio import router as portfolio_router
@@ -178,6 +179,12 @@ def market_data(ticker: str):
     return _bad_request(lambda: fetch_market(ticker))
 
 
+@app.get("/api/trading/candles/{ticker}")
+def trading_candles(ticker: str, interval: str = "1m", since: int | None = None):
+    """Bougies réelles d'un marché du simulateur de trading (Yahoo Finance, cours parfois retardés)."""
+    return _bad_request(lambda: fetch_candles(ticker, interval, since))
+
+
 # ---------- frontend statique ----------
 FRONTEND = Path(__file__).resolve().parents[2] / "frontend"
 if FRONTEND.exists():
@@ -186,3 +193,7 @@ if FRONTEND.exists():
     @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     def index():
         return FileResponse(FRONTEND / "index.html")
+
+    @app.api_route("/trading", methods=["GET", "HEAD"], include_in_schema=False)
+    def trading_page():
+        return FileResponse(FRONTEND / "trading.html")
