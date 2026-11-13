@@ -190,10 +190,16 @@ FRONTEND = Path(__file__).resolve().parents[2] / "frontend"
 if FRONTEND.exists():
     app.mount("/static", StaticFiles(directory=FRONTEND), name="static")
 
+    # Page d'accueil : le parcours « Trading Pas à Pas » ; le labo d'options est sur /labo
     @app.api_route("/", methods=["GET", "HEAD"], include_in_schema=False)
     def index():
+        return FileResponse(FRONTEND / "trading.html")
+
+    @app.api_route("/labo", methods=["GET", "HEAD"], include_in_schema=False)
+    def labo_page():
         return FileResponse(FRONTEND / "index.html")
 
+    # ancienne adresse du simulateur, gardée pour les liens déjà partagés
     @app.api_route("/trading", methods=["GET", "HEAD"], include_in_schema=False)
     def trading_page():
-        return FileResponse(FRONTEND / "trading.html")
+        return RedirectResponse("/", status_code=302)

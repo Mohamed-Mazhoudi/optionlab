@@ -78,6 +78,10 @@ def test_trading_bougies_avec_cours_simules():
         intraday._CACHE.clear()
 
 
-def test_page_trading_servie():
-    r = client.get("/trading")
-    assert r.status_code == 200 and "Trading Pas à Pas" in r.text
+def test_accueil_trading_et_labo():
+    r = client.get("/")
+    assert r.status_code == 200 and "Trading Pas à Pas" in r.text and 'href="/labo"' in r.text
+    r = client.get("/labo")
+    assert r.status_code == 200 and 'data-tab="pricer"' in r.text
+    r = client.get("/trading", follow_redirects=False)
+    assert r.status_code == 302 and r.headers["location"] == "/"
