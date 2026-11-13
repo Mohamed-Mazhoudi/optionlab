@@ -78,6 +78,12 @@ def test_trading_bougies_avec_cours_simules():
         intraday._CACHE.clear()
 
 
+def test_pages_et_statiques_revalides_apres_deploiement():
+    for path in ("/", "/labo", "/static/portfolio.js"):
+        assert client.get(path).headers["cache-control"] == "no-cache"
+    assert "no-cache" not in client.get("/api/health").headers.get("cache-control", "")
+
+
 def test_accueil_trading_et_labo():
     r = client.get("/")
     assert r.status_code == 200 and "Trading Pas à Pas" in r.text and 'href="/labo"' in r.text

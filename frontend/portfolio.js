@@ -15,7 +15,7 @@
   async function get(path) {
     const res = await fetch(API + path, { credentials: "same-origin" });
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) { const e = new Error(data.detail || "Erreur"); e.status = res.status; throw e; }
+    if (!res.ok) { const e = new Error(data.detail || `Erreur serveur (${res.status})`); e.status = res.status; throw e; }
     return data;
   }
 
@@ -53,7 +53,11 @@
           <td>${signed(e.vega)}</td><td class="${cls(e.theta)}">${signed(e.theta)}</td></tr>`).join("") + `</table>` : "";
       $("coach-ai").classList.toggle("hidden", !a.coach_enabled);
       setRemaining(a.remaining);
-    } catch { /* erreurs déjà affichées par loadPortfolio */ }
+    } catch (err) {
+      if (err.status === 401) return;   // non connecté : déjà géré par loadPortfolio
+      $("coach-alerts").innerHTML = `<div class="alert warning"><b>⚠️ Accompagnement indisponible</b><div>${esc(err.message)}</div></div>`;
+      $("coach-left").textContent = "";
+    }
   }
 
   function setRemaining(n) {

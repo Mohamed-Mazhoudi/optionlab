@@ -36,7 +36,12 @@ async def redirect_to_main_domain(request, call_next):
         if request.url.query:
             target += "?" + request.url.query
         return RedirectResponse(target, status_code=301)
-    return await call_next(request)
+    response = await call_next(request)
+    # Pages et fichiers statiques : le navigateur revalide à chaque visite (réponse 304 si rien n'a changé),
+    # sinon il peut garder un ancien app.js/portfolio.js avec une nouvelle page après un déploiement.
+    if not request.url.path.startswith("/api/") and "cache-control" not in response.headers:
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 # Base de données (SQLite en local, PostgreSQL si DATABASE_URL est défini) + routes du portefeuille
