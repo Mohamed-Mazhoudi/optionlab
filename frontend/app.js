@@ -215,6 +215,7 @@ async function loadTicker() {
       yaxis: { ...layoutBase.yaxis, nticks: 4 },
     }, { ...plotConfig, displayModeBar: false });
     updateOutputs();
+    loadInsights(d.ticker);
     if (activeTab === "strategy") await loadPreset(); else refreshActive();
   } catch (err) {
     $("ticker-info").innerHTML = `<span class="error">${err.message}</span>`;
@@ -222,6 +223,51 @@ async function loadTicker() {
     $("load-ticker").disabled = false;
   }
 }
+// ---------- actualités et consensus (Finnhub) ----------
+const escHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+let insightsSeq = 0;
+async function loadInsights(ticker) {
+  const seq = ++insightsSeq;
+  const card = $("insights-card"), box = $("insights");
+  try {
+    const res = await fetch(API + "/api/insights/" + encodeURIComponent(ticker));
+    const d = await res.json();
+    if (seq !== insightsSeq) return;
+    if (!res.ok || !d.available) {
+      card.classList.toggle("hidden", !d.reason || /non configurées/.test(d.reason));
+      box.innerHTML = `<span class="muted">${escHtml(d.reason || "")}</span>`;
+      return;
+    }
+    const parts = [];
+    if (d.profile) {
+      const cap = d.profile.market_cap_musd ? ` · capitalisation ${(d.profile.market_cap_musd / 1000).toLocaleString("fr-FR", { maximumFractionDigits: 0 })} Md ${escHtml(d.profile.currency || "")}` : "";
+      parts.push(`<p><b>${escHtml(d.profile.name)}</b> · ${escHtml(d.profile.industry || "")}${cap}</p>`);
+    }
+    if (d.recommendation) {
+      const r = d.recommendation, buy = r.strongBuy + r.buy, sell = r.sell + r.strongSell, tot = buy + r.hold + sell;
+      if (tot) {
+        const w = (n) => (100 * n / tot).toFixed(0);
+        parts.push(`<div class="consensus"><div class="bar"><span class="b" style="width:${w(buy)}%"></span><span class="h" style="width:${w(r.hold)}%"></span><span class="s" style="width:${w(sell)}%"></span></div>
+          <div class="muted">Consensus de ${tot} analystes (${escHtml(r.period || "")}) : <span class="pos">${w(buy)} % achat</span> · ${w(r.hold)} % neutre · <span class="neg">${w(sell)} % vente</span></div></div>`);
+      }
+    }
+    if (d.earnings && d.earnings.date) {
+      parts.push(`<p>Prochains résultats : <b>${new Date(d.earnings.date).toLocaleDateString("fr-FR")}</b>` +
+        (d.earnings.eps_estimate != null ? ` (BPA attendu ${d.earnings.eps_estimate})` : "") +
+        ` · la volatilité implicite monte souvent avant une publication.</p>`);
+    }
+    if (d.news.length) {
+      parts.push(`<ul class="news">${d.news.map((n) => `<li><span class="muted">${new Date(n.date).toLocaleDateString("fr-FR")} · ${escHtml(n.source)}</span><br>` +
+        (n.url ? `<a href="${escHtml(n.url)}" target="_blank" rel="noopener noreferrer">${escHtml(n.headline)}</a>` : escHtml(n.headline)) + `</li>`).join("")}</ul>`);
+    } else parts.push(`<p class="muted">Pas d'actualité ces 7 derniers jours.</p>`);
+    parts.push(`<p class="muted">Source : Finnhub. Informations publiques, pas un conseil en investissement.</p>`);
+    box.innerHTML = parts.join("");
+    card.classList.remove("hidden");
+  } catch {
+    if (seq === insightsSeq) card.classList.add("hidden");
+  }
+}
+
 $("load-ticker").onclick = loadTicker;
 $("ticker").addEventListener("keydown", (e) => { if (e.key === "Enter") loadTicker(); });
 

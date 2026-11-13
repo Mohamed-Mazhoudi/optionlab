@@ -76,6 +76,10 @@
 
       <div class="stats" id="strategy-stats"></div>
       <div class="card"><div id="chart-strategy" class="chart"></div></div>
+      <div class="card hidden" id="insights-card">
+        <h2>Actualités et analystes</h2>
+        <div id="insights" class="small"></div>
+      </div>
     </section>
 
     <!-- Onglet pricer -->
@@ -207,7 +211,35 @@
         <div class="stats" id="pf-stats"></div>
         <div id="pf-notice" class="small muted"></div>
 
-        <div class="card">
+        <div class="card coach">
+          <h2>Accompagnement</h2>
+          <div id="coach-alerts" class="alerts"></div>
+          <div id="coach-expo" class="table-wrap"></div>
+          <div id="coach-ai" class="coach-ai">
+            <h3>Coach IA</h3>
+            <div id="coach-thread" class="thread"></div>
+            <div class="chips" id="coach-chips">
+              <button class="secondary small-btn" data-q="Analyse mon portefeuille : quels sont mes principaux risques ?">Analyse mon portefeuille</button>
+              <button class="secondary small-btn" data-q="Comment couvrir mon exposition au delta ?">Comment me couvrir ?</button>
+              <button class="secondary small-btn" data-q="Propose-moi une stratégie adaptée à ma vue de marché sur mes titres.">Propose une stratégie</button>
+              <button class="secondary small-btn" data-q="Que disent les actualités récentes sur mes titres et quel impact sur mes positions ?">Et les actualités ?</button>
+            </div>
+            <div class="row">
+              <label class="grow">Ta question <textarea id="coach-q" rows="2" maxlength="1000" placeholder="Ex. : je pense qu'Apple va rester stable jusqu'en janvier, que faire ?"></textarea></label>
+              <label>Ta vue de marché
+                <select id="coach-view">
+                  <option value="">Non précisée</option><option value="haussier">Haussière</option>
+                  <option value="baissier">Baissière</option><option value="neutre">Neutre</option>
+                  <option value="volatil">Gros mouvement attendu</option><option value="prudent">Prudente</option>
+                </select></label>
+            </div>
+            <div class="row"><button id="coach-send">Demander au coach</button><span id="coach-left" class="small muted"></span></div>
+          </div>
+          <p class="small muted">Alertes calculées automatiquement à partir de tes greeks. Le coach IA (Claude) explique et propose,
+            mais ne passe jamais d'ordre à ta place. Simulation éducative, pas un conseil en investissement.</p>
+        </div>
+
+        <div class="card" id="order-card">
           <h2>Passer un ordre</h2>
           <div class="row">
             <label>Titre <input type="text" id="o-ticker" placeholder="AAPL, TTE.PA, ^FCHI…" autocomplete="off"></label>

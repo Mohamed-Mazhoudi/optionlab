@@ -59,6 +59,12 @@ CREATE TABLE IF NOT EXISTS trades (
     cash_flow {FLOAT} NOT NULL,
     created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS coach_usage (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    day TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    PRIMARY KEY (user_id, day)
+);
 CREATE INDEX IF NOT EXISTS idx_positions_user ON positions(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_trades_user ON trades(user_id);
 """

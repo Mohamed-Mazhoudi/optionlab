@@ -17,6 +17,7 @@ from optionlab.marketdata import fetch_market
 from optionlab.intraday import fetch_candles
 
 from .db import Database
+from .routes_coach import router as coach_router
 from .routes_portfolio import router as portfolio_router
 
 app = FastAPI(title="OptionLab API", version="1.0.0",
@@ -42,6 +43,7 @@ async def redirect_to_main_domain(request, call_next):
 app.state.db = Database()
 app.state.db.init_schema()
 app.include_router(portfolio_router)
+app.include_router(coach_router)
 
 
 # ---------- schémas ----------

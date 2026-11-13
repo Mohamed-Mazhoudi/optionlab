@@ -120,6 +120,34 @@ table.data { width: 100%; border-collapse: collapse; font-size: 13px; font-varia
 #pf-auth, #pf-app { display: flex; flex-direction: column; gap: 16px; }
 #pf-auth.hidden, #pf-app.hidden { display: none; }
 
+/* accompagnement */
+.alerts { display: flex; flex-direction: column; gap: 8px; }
+.alert { border-left: 3px solid var(--muted); background: var(--bg); border-radius: 0 8px 8px 0; padding: 9px 12px; font-size: 14px; line-height: 1.5; }
+.alert div { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.alert.danger { border-color: var(--red); background: rgba(239,91,91,.08); }
+.alert.warning { border-color: var(--amber); background: rgba(242,184,75,.08); }
+.alert.info { border-color: var(--accent); }
+.alert.ok { border-color: var(--green); }
+#coach-expo:not(:empty) { margin-top: 14px; }
+.coach-ai { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+.coach-ai h3 { margin: 0 0 10px; font-size: 15px; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+textarea { background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 14px; width: 100%; resize: vertical; }
+.thread { display: flex; flex-direction: column; gap: 10px; max-height: 520px; overflow-y: auto; }
+.thread:not(:empty) { margin-bottom: 14px; }
+.msg { padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.6; max-width: 92%; }
+.msg.user { align-self: flex-end; background: rgba(79,140,255,.18); }
+.msg.bot { align-self: flex-start; background: var(--bg); border: 1px solid var(--border); }
+.suggestion { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 10px; padding: 8px 10px; border: 1px solid var(--accent); border-radius: 8px; font-size: 13px; }
+.suggestion button { flex: none; }
+/* actualités */
+#insights p { margin: 0 0 10px; }
+.consensus { margin-bottom: 12px; }
+.consensus .bar { display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: var(--bg); margin-bottom: 6px; }
+.consensus .b { background: var(--green); } .consensus .h { background: var(--muted); } .consensus .s { background: var(--red); }
+.news { list-style: none; padding: 0; margin: 0 0 10px; display: flex; flex-direction: column; gap: 10px; }
+.news a { color: var(--text); text-decoration: none; } .news a:hover { color: var(--accent); }
+
 @media (max-width: 860px) {
   main { grid-template-columns: 1fr; }
   .market { position: static; grid-row: auto; }
@@ -129,4 +157,6 @@ table.data { width: 100%; border-collapse: collapse; font-size: 13px; font-varia
   header { padding: 12px 16px; }
   nav { overflow-x: auto; max-width: 100%; }
   .tab { white-space: nowrap; padding: 8px 10px; }
+  .suggestion { flex-direction: column; align-items: stretch; }
+  .msg { max-width: 100%; }
 }

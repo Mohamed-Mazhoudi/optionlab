@@ -15,6 +15,8 @@ Plateforme web éducative pour comprendre les options : pricing Black-Scholes, g
 - **Couverture (delta hedging)** : simulation Monte-Carlo d'une banque qui vend une option et se couvre ; effet de la fréquence de rebalancement, de l'écart vol réalisée / vol implicite, de la tendance et des frais.
 - **Apprendre** : 15 leçons en 5 modules (bases, pricing, greeks, stratégies, couverture), 45 questions de quiz corrigées, boutons « essayer dans le labo », progression sauvegardée dans le navigateur.
 - **Portefeuille virtuel** : comptes utilisateurs, 100 000 crédits virtuels, achat/vente de calls et puts sur de vrais titres (bid/ask, marge pour la vente, règlement à l'échéance), positions valorisées en direct avec greeks, historique et classement des joueurs.
+- **Accompagnement** : alertes de risque calculées automatiquement (call vendu à découvert, marge, échéances, exposition delta avec couverture chiffrée, vega, theta) et **coach IA** (API Claude) qui analyse le portefeuille et propose des stratégies ou des ordres de couverture, que le joueur valide lui-même.
+- **Données pro** (Finnhub) : actualités des 7 derniers jours, consensus des analystes, profil et date des prochains résultats pour les actions américaines.
 - **API REST** documentée automatiquement (Swagger sur `/docs`).
 
 ## Structure
@@ -32,7 +34,11 @@ optionlab/
 │   │   ├── db.py           # accès base (SQLite en local, PostgreSQL si DATABASE_URL)
 │   │   ├── auth.py         # comptes, mots de passe hachés (PBKDF2), sessions
 │   │   ├── portfolio.py    # règles du portefeuille virtuel
-│   │   └── routes_portfolio.py
+│   │   ├── advisor.py      # alertes de risque automatiques
+│   │   ├── coach.py        # coach IA (API Claude), quotas
+│   │   ├── insights.py     # données Finnhub (actualités, analystes)
+│   │   ├── routes_portfolio.py
+│   │   └── routes_coach.py
 │   ├── tests/              # pytest (parité call-put, greeks vs différences finies, etc.)
 │   └── requirements.txt
 ├── frontend/               # HTML/CSS/JS sans framework + Plotly (lessons.js = contenu des cours)
@@ -82,12 +88,26 @@ pytest -q
 | POST | `/api/portfolio/quote`, `/api/portfolio/orders` | Cotation, passage d'ordre |
 | POST | `/api/portfolio/positions/{id}/close` | Clôture d'une position |
 | GET | `/api/leaderboard` | Classement des joueurs |
+| GET | `/api/coach/analysis` | Alertes de risque et exposition par titre |
+| POST | `/api/coach` | Question au coach IA (quota quotidien) |
+| GET | `/api/insights/{ticker}` | Actualités, consensus, résultats (Finnhub) |
 
 ## Base de données
 
 En local, sans configuration, les comptes sont stockés dans `backend/optionlab.db` (SQLite, ignoré par Git).
 En production, définir la variable d'environnement `DATABASE_URL` avec l'URL PostgreSQL (ex. Neon) :
 `postgresql://utilisateur:motdepasse@hote/base?sslmode=require`. Les tables sont créées au démarrage.
+
+## Variables d'environnement (facultatives)
+
+| Variable | Rôle |
+|---|---|
+| `ANTHROPIC_API_KEY` | Active le coach IA (clé sur console.anthropic.com) |
+| `COACH_MODEL` | Modèle Claude utilisé (défaut : `claude-haiku-5-5`) |
+| `COACH_DAILY_USER` / `COACH_DAILY_GLOBAL` | Questions par jour par joueur (15) et pour tout le site (300) : plafond de dépenses |
+| `FINNHUB_API_KEY` | Active les actualités et le consensus des analystes (clé gratuite sur finnhub.io) |
+
+Sans ces clés, le site fonctionne normalement : les alertes automatiques restent disponibles, le coach et les actualités sont masqués.
 
 ## Conventions
 

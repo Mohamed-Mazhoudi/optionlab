@@ -32,8 +32,103 @@
   }
 
   async function refresh() {
-    await Promise.all([loadPortfolio(), loadHistory(), loadBoard()]);
+    await Promise.all([loadPortfolio(), loadHistory(), loadBoard(), loadAnalysis()]);
   }
+
+  // ---------- accompagnement : alertes automatiques + coach IA ----------
+  const ICON = { danger: "⛔", warning: "⚠️", info: "ℹ️", ok: "✅" };
+  const MAT = { "1M": "1 mois", "3M": "3 mois", "6M": "6 mois", "1A": "1 an" };
+  let coachHistory = [];   // derniers échanges envoyés au coach (contexte de conversation)
+  let suggestions = [];
+
+  async function loadAnalysis() {
+    try {
+      const a = await get("/api/coach/analysis");
+      $("coach-alerts").innerHTML = a.alerts.map((x) =>
+        `<div class="alert ${x.level}"><b>${ICON[x.level]} ${esc(x.title)}</b><div>${esc(x.text)}</div></div>`).join("");
+      $("coach-expo").innerHTML = a.exposures.length ? `<table class="data"><tr><th>Exposition par titre</th>
+        <th>Delta (actions)</th><th>Exposition</th><th>Vega (1 pt)</th><th>Theta / jour</th></tr>` +
+        a.exposures.map((e) => `<tr><td><b>${esc(e.ticker)}</b> <span class="muted">${e.positions} pos.</span></td>
+          <td>${nf(e.delta, 1)}</td><td class="${cls(e.delta_value)}">${signed(e.delta_value, 0)}</td>
+          <td>${signed(e.vega)}</td><td class="${cls(e.theta)}">${signed(e.theta)}</td></tr>`).join("") + `</table>` : "";
+      $("coach-ai").classList.toggle("hidden", !a.coach_enabled);
+      setRemaining(a.remaining);
+    } catch { /* erreurs déjà affichées par loadPortfolio */ }
+  }
+
+  function setRemaining(n) {
+    $("coach-left").textContent = `${n} question(s) restante(s) aujourd'hui`;
+    $("coach-send").disabled = n <= 0;
+  }
+
+  // Texte du coach : échappé, puis **gras** et retours à la ligne
+  const rich = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
+
+  function bubble(role, html) {
+    const div = document.createElement("div");
+    div.className = "msg " + role;
+    div.innerHTML = html;
+    $("coach-thread").appendChild(div);
+    div.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    return div;
+  }
+
+  function suggestionHtml(s, i) {
+    const txt = s.type === "strategy"
+      ? `Stratégie <b>${esc(s.label)}</b> sur ${esc(s.ticker)}`
+      : `${s.side === "long" ? "Acheter" : "Vendre"} ${s.quantity} ${s.kind} ${esc(s.ticker)} strike ${nf(s.strike, s.strike % 1 ? 2 : 0)}, ${MAT[s.maturity]}`;
+    const btn = s.type === "strategy" ? "Voir dans le labo" : "Pré-remplir le ticket";
+    return `<div class="suggestion"><div>${txt}<div class="muted">${esc(s.reason)}</div></div>
+      <button class="small-btn" data-sug="${i}">${btn}</button></div>`;
+  }
+
+  async function askCoach(question) {
+    question = question.trim();
+    if (!question) return;
+    $("coach-send").disabled = true;
+    bubble("user", esc(question));
+    const wait = bubble("bot", `<span class="muted">Le coach analyse ton portefeuille…</span>`);
+    try {
+      const r = await post("/api/coach", { question, view: $("coach-view").value, history: coachHistory });
+      const start = suggestions.length;
+      suggestions.push(...r.suggestions);
+      wait.innerHTML = rich(r.answer) + r.suggestions.map((s, i) => suggestionHtml(s, start + i)).join("");
+      coachHistory.push({ role: "user", content: question }, { role: "assistant", content: r.answer });
+      coachHistory = coachHistory.slice(-6);
+      $("coach-q").value = "";
+      setRemaining(r.remaining);
+    } catch (err) {
+      wait.innerHTML = `<span class="error">${esc(err.message)}</span>`;
+      $("coach-send").disabled = false;
+    }
+  }
+
+  $("coach-send").onclick = () => askCoach($("coach-q").value);
+  $("coach-q").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!$("coach-send").disabled) askCoach($("coach-q").value); }
+  });
+  $("coach-chips").addEventListener("click", (e) => {
+    const q = e.target.dataset.q;
+    if (q && !$("coach-send").disabled) askCoach(q);
+  });
+
+  $("coach-thread").addEventListener("click", async (e) => {
+    const s = suggestions[e.target.dataset.sug];
+    if (!s) return;
+    if (s.type === "strategy") {
+      switchTab("strategy");
+      $("preset").value = s.preset;
+      $("ticker").value = s.ticker;
+      await loadTicker();                    // charge le cours réel puis la stratégie choisie
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      $("o-ticker").value = s.ticker; $("o-kind").value = s.kind; $("o-side").value = s.side;
+      $("o-strike").value = s.strike; $("o-maturity").value = s.maturity; $("o-qty").value = s.quantity;
+      invalidate();
+      $("o-result").innerHTML = `Ticket pré-rempli par le coach. Clique sur <b>Coter</b> pour voir le prix, puis valide si ça te convient.`;
+      $("order-card").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
 
   // ---------- connexion / inscription ----------
   function bindForm(id, path) {
@@ -55,7 +150,11 @@
   bindForm("login-form", "/api/auth/login");
   bindForm("register-form", "/api/auth/register");
 
-  $("pf-logout").onclick = async () => { await post("/api/auth/logout", {}); me = null; show(); };
+  $("pf-logout").onclick = async () => {
+    await post("/api/auth/logout", {}); me = null;
+    coachHistory = []; suggestions = []; $("coach-thread").innerHTML = "";
+    show();
+  };
   $("pf-refresh").onclick = refresh;
 
   // ---------- portefeuille ----------
